@@ -48,7 +48,7 @@
     - name: create key pair using key_material obtained using 'file' lookup plugin
       amazon.aws.ec2_key:
         name: postgres-demo
-        key_material: "{{ lookup('file', '/root/aws-postgresql-demo/keys/postgres-demo') }}"
+        key_material: "{{ lookup('file', '/root/aws-postgresql-demo/keys/postgres-demo.pub') }}"
       register: key_pair
 
     - name: Start Fedora CoreOS instances
