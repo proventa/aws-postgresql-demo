@@ -70,7 +70,7 @@
     - name: Ensure the group [ "{{ ec2_tags.cluster }}" ] exists in the inventory file
       ansible.builtin.lineinfile:
         path: "{{ inventory_file }}"
-        line: "[ {{ ec2_tags.cluster }} ]"
+        line: "[{{ ec2_tags.cluster }}]"
         state: present
       
     - name: Add the insance ID to the group 'etcd' in the inventory file
