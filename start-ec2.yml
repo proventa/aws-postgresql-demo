@@ -4,7 +4,7 @@
   gather_facts: false
   vars:
     num_of_instances: 2
-    inventory_file: /root/aws-postgresql-demo/ansible
+    inventory_file: /root/aws-postgresql-demo/ansible/hosts
     ec2_tags:
       cluster: etcd
     ssh_priv_key: /root/aws-postgresql-demo/keys/postgres-demo
