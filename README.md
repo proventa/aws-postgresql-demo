@@ -1,6 +1,19 @@
 # AWS PostgreSQL Demo
 
+## Preqrequisites
+1. Make sure that you have an AWS account and have configured your AWS CLI with your credentials.
+2. Make sure that you have Ansible installed on your machine.
 
+## Ansible Script
+* To launch one or many EC2 instances, run:
+```
+ansible-playbook -i inventory/ec2.py start-ec2.yml
+```
+
+* To stop one or many EC2 instances, run:
+```
+ansible-playbook -i inventory/ec2.py stop-ec2.yml
+```
 
 ## Getting started
 
