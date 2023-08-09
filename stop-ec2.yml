@@ -1,0 +1,24 @@
+- name: Create a Fedora CoreOS instance
+  hosts: localhost
+  connection: local
+  vars:
+    inventory_file: /root/aws-postgresql-demo/ansible/hosts
+    ec2_tags:
+      cluster: etcd
+  gather_facts: false
+  tasks:    
+    - name: Terminating EC2 instances
+      amazon.aws.ec2_instance:
+        state: terminated
+        tags: "{{ ec2_tags }}"
+        region: eu-central-1
+        vpc_subnet_id: subnet-00ee44d5137ad63bf # How can I make this dynamic?
+        # wait_timeout: 60 # seconds
+      register: ec2_instance
+
+    - name: Remove the insance ID from the group "{{ ec2_tags.cluster }}" in the inventory file
+      ansible.builtin.lineinfile:
+        path: "{{ inventory_file }}"
+        regexp: "^{{ item }}.*$"
+        state: absent
+      with_items: "{{ ec2_instance.terminate_success }}"
