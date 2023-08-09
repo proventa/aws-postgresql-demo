@@ -7,12 +7,12 @@
 ## Ansible Script
 * To launch one or many EC2 instances, run:
 ```
-ansible-playbook -i inventory/ec2.py start-ec2.yml
+ansible-playbook -i ansible/hosts start-ec2.yml
 ```
 
 * To stop one or many EC2 instances, run:
 ```
-ansible-playbook -i inventory/ec2.py stop-ec2.yml
+ansible-playbook -i ansible/hosts stop-ec2.yml
 ```
 
 ## Getting started
