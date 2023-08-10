@@ -6,14 +6,13 @@
     ec2_tags:
       cluster: etcd
   gather_facts: false
-  tasks:    
-    - name: Terminating EC2 instances
+  tasks:
+    - name: Terminate every running instance in a region with the tag {{ ec2_tags.cluster }}}
       amazon.aws.ec2_instance:
-        state: terminated
-        tags: "{{ ec2_tags }}"
         region: eu-central-1
-        vpc_subnet_id: subnet-00ee44d5137ad63bf # How can I make this dynamic?
-        # wait_timeout: 60 # seconds
+        state: terminated
+        filters:
+          tag:cluster: "{{ ec2_tags.cluster }}"
       register: ec2_instance
 
     - name: Remove the insance ID from the group "{{ ec2_tags.cluster }}" in the inventory file
