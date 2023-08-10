@@ -19,7 +19,16 @@
         state: present
       register: vpc_net
 
-    - name: Ensure that the subnet for etcd exists
+    - name: Ensure that an internet gateway for the VPC exists
+      amazon.aws.ec2_vpc_igw:
+        vpc_id: "{{ vpc_net.vpc.id }}"
+        state: present
+        region: eu-central-1
+        tags:
+          env: demo
+      register: igw
+
+    - name: Ensure that the subnet for etcd in the VPC exists
       amazon.aws.ec2_vpc_subnet:
         state: present
         vpc_id: "{{ vpc_net.vpc.id }}"
@@ -29,10 +38,25 @@
           Name: etcd-subnet
       register: etcd_subnet
 
+    - name: Ensure that the route table for the VPC exists # So that the subnet can access and be accessed from the internet
+      amazon.aws.ec2_vpc_route_table:
+        vpc_id: "{{ vpc_net.vpc.id }}"
+        region: eu-central-1
+        tags:
+          env: demo
+        subnets:
+          - "{{ etcd_subnet.subnet.id }}"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ igw.gateway_id }}"
+          - dest: ::/0
+            gateway_id: "{{ igw.gateway_id }}"
+      register: public_route_table
+
     - name: Ensure that the security group exists
       amazon.aws.ec2_security_group:
         name: "Postgres Demo SG"
-        description: "Allow SSH"
+        description: "Security group for Postgres Demo"
         vpc_id: "{{ vpc_net.vpc.id }}"
         region: eu-central-1
         rules:
@@ -59,12 +83,11 @@
         region: eu-central-1
         network:
           assign_public_ip: true
-          security_group_id: "{{ sg.group_id }}"
+        security_group: "{{ sg.group_name }}"
         vpc_subnet_id: "{{ etcd_subnet.subnet.id }}"
         state: running
         key_name: "{{ key_pair.key.name }}"
         tags: "{{ ec2_tags }}"
-        user_data: "./transpiled_config.ign" # To be changed
       register: ec2_instance
 
     - name: Ensure the group [ "{{ ec2_tags.cluster }}" ] exists in the inventory file
