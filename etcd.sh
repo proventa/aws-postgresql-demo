@@ -2,14 +2,14 @@
 
 private_ipv4=$(hostname -I | awk '{print $1}')
 
-mkdir -p /tmp/etcd/$private_ipv4
+mkdir -p /tmp/etcd/data
 
 setenforce 0
 sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 
 
 # to write service file for etcd with Docker
-cat > /tmp/$private_ipv4.service <<EOF
+cat > /tmp/etcd.service <<EOF
 [Unit]
 Description=etcd with Docker
 Documentation=https://github.com/coreos/etcd
@@ -25,10 +25,10 @@ ExecStart=/usr/bin/docker \
   --rm \
   --net=host \
   --name etcd-v3.3.8 \
-  --volume=/tmp/etcd/$private_ipv4:/etcd-data \
+  --volume=/tmp/etcd/data:/etcd-data \
   gcr.io/etcd-development/etcd:v3.3.8 \
   /usr/local/bin/etcd \
-  --name $private_ipv4 \
+  --name etcd-$private_ipv4 \
   --data-dir /etcd-data \
   --listen-client-urls http://$private_ipv4:2379 \
   --advertise-client-urls http://$private_ipv4:2379 \
@@ -43,10 +43,10 @@ ExecStop=/usr/bin/docker stop etcd-v3.3.8
 WantedBy=multi-user.target
 EOF
 
-mv /tmp/$private_ipv4.service /etc/systemd/system/$private_ipv4.service
+mv /tmp/etcd.service /etc/systemd/system/etcd.service
 
 systemctl daemon-reload
 
-systemctl enable $private_ipv4.service
+systemctl enable etcd.service
 
-systemctl start $private_ipv4.service
+systemctl start etcd.service
