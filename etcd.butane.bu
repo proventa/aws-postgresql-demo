@@ -1,0 +1,96 @@
+variant: fcos
+version: 1.5.0
+passwd:
+    users:
+      - name: core
+        ssh_authorized_keys:
+          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiGUz4OVm53+SzmnHTc4cg3EbzqRhBGJgJIkNyG44p+Jf5HnMw8fTD1rDx13hkq5A3075y2NQu83yz/MFSmxXiZ3qvBJfYVS3rGx+xOPk7Hh21i5mYo25UBbvzveOHFGvR7A7BMH+GcvwCIfBJ9ou3uS4kmxJbyb+aqtU80POeBTtHlV+S7i9VpLrIJ8upFUAfYvHcy7Laz/B4EgNxRtpQkIRv+ISYBiyXs5EtRTQCEMLEYhSUapcT8xJgHKaOun3c6xQe5bqklLHnrkBe23yK/GSgv8Ql1/xkbdQQtZ67ua/sSyYgGYDQwPrd0Xvm0TNA5pwqbXOApITsY2l87P6eV1o+9TVXnF2vqnHN4fn4Gw6+WKPBYWFtSfPRILPADrPyBFf4qzRXyFW+VUzZNtRwev+rcyTtoPT2IwEpZjuOie34sEuoGojPzk4pEvA8Q9ePx5rvKWv9Ip9sXaF6mktGwR3Z76gaBxHf92EzGy3eKV79OyiOfokaPPXnu8PnDhU= core
+storage:
+    files:
+        - path: /usr/local/bin/selinux-permissive.sh
+          mode: 0755
+          contents:
+            inline: |
+              #!/bin/bash
+              setenforce 0
+              sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+        - path: /usr/local/bin/start-etcd.sh
+          mode: 0755
+          contents:
+            inline: |
+              #!/bin/bash
+
+              private_ipv4=$(hostname -I | awk '{print $1}')
+
+              mkdir -p /tmp/etcd/$private_ipv4
+
+              cat > /tmp/$private_ipv4.service <<EOF
+              [Unit]
+              Description=etcd with Docker
+              Documentation=https://github.com/coreos/etcd
+
+              [Service]
+              Restart=always
+              RestartSec=5s
+              TimeoutStartSec=0
+              LimitNOFILE=40000
+
+              ExecStart=/usr/bin/docker \
+                run \
+                --rm \
+                --net=host \
+                --name etcd-v3.3.8 \
+                --volume=/tmp/etcd/$private_ipv4:/etcd-data \
+                gcr.io/etcd-development/etcd:v3.3.8 \
+                /usr/local/bin/etcd \
+                --name $private_ipv4 \
+                --data-dir /etcd-data \
+                --listen-client-urls http://$private_ipv4:2379 \
+                --advertise-client-urls http://$private_ipv4:2379 \
+                --listen-peer-urls http://$private_ipv4:2380 \
+                --initial-advertise-peer-urls http://$private_ipv4:2380 \
+                --initial-cluster-token tkn \
+                --initial-cluster-state new
+
+              ExecStop=/usr/bin/docker stop etcd-v3.3.8
+
+              [Install]
+              WantedBy=multi-user.target
+              EOF
+
+              mv /tmp/$private_ipv4.service /etc/systemd/system/$private_ipv4.service
+
+              systemctl daemon-reload
+
+              systemctl enable $private_ipv4.service
+
+              systemctl start $private_ipv4.service
+        
+        - path: /etc/systemd/system/selinux-permissive.service
+          mode: 0644
+          contents:
+            inline: |
+              [Unit]
+              Description=Turn SELinux Permissive
+
+              [Service]
+              Type=oneshot
+              ExecStart=/usr/local/bin/selinux-permissive.sh
+
+              [Install]
+              WantedBy=multi-user.target
+
+        - path: /etc/systemd/system/start-etcd.service
+          mode: 0644
+          contents:
+            inline: |
+              [Unit]
+              Description=Start etcd with Docker
+
+              [Service]
+              Type=oneshot
+              ExecStart=/usr/local/bin/start-etcd.sh
+
+              [Install]
+              WantedBy=multi-user.target

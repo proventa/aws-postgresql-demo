@@ -1,0 +1,51 @@
+{
+  "ignition": {
+    "version": "3.4.0"
+  },
+  "passwd": {
+    "users": [
+      {
+        "name": "core",
+        "sshAuthorizedKeys": [
+          "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiGUz4OVm53+SzmnHTc4cg3EbzqRhBGJgJIkNyG44p+Jf5HnMw8fTD1rDx13hkq5A3075y2NQu83yz/MFSmxXiZ3qvBJfYVS3rGx+xOPk7Hh21i5mYo25UBbvzveOHFGvR7A7BMH+GcvwCIfBJ9ou3uS4kmxJbyb+aqtU80POeBTtHlV+S7i9VpLrIJ8upFUAfYvHcy7Laz/B4EgNxRtpQkIRv+ISYBiyXs5EtRTQCEMLEYhSUapcT8xJgHKaOun3c6xQe5bqklLHnrkBe23yK/GSgv8Ql1/xkbdQQtZ67ua/sSyYgGYDQwPrd0Xvm0TNA5pwqbXOApITsY2l87P6eV1o+9TVXnF2vqnHN4fn4Gw6+WKPBYWFtSfPRILPADrPyBFf4qzRXyFW+VUzZNtRwev+rcyTtoPT2IwEpZjuOie34sEuoGojPzk4pEvA8Q9ePx5rvKWv9Ip9sXaF6mktGwR3Z76gaBxHf92EzGy3eKV79OyiOfokaPPXnu8PnDhU= core"
+        ]
+      }
+    ]
+  },
+  "storage": {
+    "files": [
+      {
+        "path": "/usr/local/bin/selinux-permissive.sh",
+        "contents": {
+          "compression": "",
+          "source": "data:;base64,IyEvYmluL2Jhc2gKc2V0ZW5mb3JjZSAwCnNlZCAtaSAncy9eU0VMSU5VWD1lbmZvcmNpbmckL1NFTElOVVg9cGVybWlzc2l2ZS8nIC9ldGMvc2VsaW51eC9jb25maWcK"
+        },
+        "mode": 493
+      },
+      {
+        "path": "/usr/local/bin/start-etcd.sh",
+        "contents": {
+          "compression": "gzip",
+          "source": "data:;base64,H4sIAAAAAAAC/5RT32sTQRB+n79ixUL1Ye9OU7GGng+SFALFglF8iEE2e0MyZH8cu3MXg/q/y20ucI1NoU+7O9/MfB/fzL58ka/I5SsVNwB1oFYx/qS6vSovXm18ZKcsCjkTf4TabcXl7zqQY3Hx5u/lawC7rSgIWYucbZ0j6yq/GPYA0IrFxwP8AMkihpY0ipub6f0tLL454iVMMOpANZN3ZddN7Ig3YuL1FgNMvG4sOlYJ3jDXcZzna+JNs8q0t7n2AX1MMgAW8wPBEr5gZBW4VGan9vH4nKMu30X4ShZ9w/NjqIA7ssSf729nd9PyqiiKAmD6C3XKKPMmhuRXlTSJHyBEaFw6pQy2vzjksjPv+Ow87GTJdpSNsus+3HrTWCzPeDdOMVkpVil/rUNGvg9ii8bXnRspMB70TRKN18okocnGgYwHHD3QcchukieUUhqKjE5qQ+hYNsFE0Rk/zk+0vh29/9CXqKrFwBTxWVU9UY0Yniy4LvoCcsSkzIDu+bXaNJExSPZbdIK37gweWTEKh7vjKvj6v02I7OvhjAEWMxdZGbOE78oxVp/2pW0Mk2wihoxVWCNDt/xg26d+SDeUPO4jo6368/FMgAOq2YhKofVOBjReVUMAnVqZkzV4rEH6JGfS/gUAAP//bXUl6jQEAAA="
+        },
+        "mode": 493
+      },
+      {
+        "path": "/etc/systemd/system/selinux-permissive.service",
+        "contents": {
+          "compression": "",
+          "source": "data:,%5BUnit%5D%0ADescription%3DTurn%20SELinux%20Permissive%0A%0A%5BService%5D%0AType%3Doneshot%0AExecStart%3D%2Fusr%2Flocal%2Fbin%2Fselinux-permissive.sh%0A%0A%5BInstall%5D%0AWantedBy%3Dmulti-user.target%0A"
+        },
+        "mode": 420
+      },
+      {
+        "path": "/etc/systemd/system/start-etcd.service",
+        "contents": {
+          "compression": "",
+          "source": "data:,%5BUnit%5D%0ADescription%3DStart%20etcd%20with%20Docker%0A%0A%5BService%5D%0AType%3Doneshot%0AExecStart%3D%2Fusr%2Flocal%2Fbin%2Fstart-etc.sh%0A%0A%5BInstall%5D%0AWantedBy%3Dmulti-user.target%0A"
+        },
+        "mode": 420
+      }
+    ]
+  }
+}
