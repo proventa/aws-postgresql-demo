@@ -5,8 +5,49 @@ passwd:
       - name: core
         ssh_authorized_keys:
           - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiGUz4OVm53+SzmnHTc4cg3EbzqRhBGJgJIkNyG44p+Jf5HnMw8fTD1rDx13hkq5A3075y2NQu83yz/MFSmxXiZ3qvBJfYVS3rGx+xOPk7Hh21i5mYo25UBbvzveOHFGvR7A7BMH+GcvwCIfBJ9ou3uS4kmxJbyb+aqtU80POeBTtHlV+S7i9VpLrIJ8upFUAfYvHcy7Laz/B4EgNxRtpQkIRv+ISYBiyXs5EtRTQCEMLEYhSUapcT8xJgHKaOun3c6xQe5bqklLHnrkBe23yK/GSgv8Ql1/xkbdQQtZ67ua/sSyYgGYDQwPrd0Xvm0TNA5pwqbXOApITsY2l87P6eV1o+9TVXnF2vqnHN4fn4Gw6+WKPBYWFtSfPRILPADrPyBFf4qzRXyFW+VUzZNtRwev+rcyTtoPT2IwEpZjuOie34sEuoGojPzk4pEvA8Q9ePx5rvKWv9Ip9sXaF6mktGwR3Z76gaBxHf92EzGy3eKV79OyiOfokaPPXnu8PnDhU= core
+systemd:
+    units:
+      - name: selinux-permissive.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Turn SELinux Permissive
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/selinux-permissive.sh
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: start-etcd.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Start etcd with Docker
+          After=selinux-permissive.service
+          Requires=selinux-permissive.service
+          Requires=docker.service
+          After=docker.service
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/start-etcd.sh
+
+          [Install]
+          WantedBy=multi-user.target
 storage:
     files:
+        - path: /etc/certs/etcd-root-ca.pem
+          mode: 0755
+          contents:
+            local: certs/etcd-root-ca.pem
+
+        - path: /etc/certs/etcd.pem
+          mode: 0755
+          contents:
+            local: certs/etcd.pem
+
         - path: /usr/local/bin/selinux-permissive.sh
           mode: 0755
           contents:
@@ -24,13 +65,28 @@ storage:
               private_ipv4=$(hostname -I | awk '{print $1}')
               UUID=$(uuidgen)
 
+              # If private_ipv4 is empty, ask again until it is not empty. If already 60 seconds, exit.
+              count=0
+              while [ -z "$private_ipv4" ]; do
+                sleep 1
+                private_ipv4=$(hostname -I | awk '{print $1}')
+                count=$((count+1))
+                if [ $count -eq 60 ]; then
+                  echo "Private IPv4 is empty. Check your network."
+                  exit 1
+                fi
+              done
+
+              mkdir -p /var/home/core/certs
+              cp /etc/certs/* /var/home/core/certs
+
               mkdir -p /tmp/etcd/data
 
               # to write service file for etcd with Docker
               cat > /tmp/etcd.service <<EOF
               [Unit]
               Description=etcd with Docker
-              Documentation=https://github.com/coreos/etcd
+              Documentation=httpss://github.com/coreos/etcd
 
               [Service]
               Restart=always
@@ -42,22 +98,30 @@ storage:
                 run \
                 --rm \
                 --net=host \
-                --name etcd-v3.3.8 \
+                --name etcd-container \
                 --volume=/tmp/etcd/data:/etcd-data \
-                --volume=/etc/ssl/certs:/etc/ssl/certs:ro \
+                --volume=/var/home/core/certs:/etcd-ssl-certs-dir \
                 gcr.io/etcd-development/etcd:v3.3.8 \
                 /usr/local/bin/etcd \
                 --name etcd-$private_ipv4 \
                 --data-dir /etcd-data \
-                --listen-client-urls http://$private_ipv4:2379 \
-                --advertise-client-urls http://$private_ipv4:2379 \
-                --listen-peer-urls http://$private_ipv4:2380 \
-                --initial-advertise-peer-urls http://$private_ipv4:2380 \
+                --listen-client-urls https://$private_ipv4:2379 \
+                --advertise-client-urls https://$private_ipv4:2379 \
+                --listen-peer-urls https://$private_ipv4:2380 \
+                --initial-advertise-peer-urls https://$private_ipv4:2380 \
                 --initial-cluster-token tkn \
                 --initial-cluster-state new \
-                --discovery=http://discovery.etcd.io/$UUID
+                --client-cert-auth \
+                --trusted-ca-file /etcd-ssl-certs-dir/etcd-root-ca.pem \
+                --cert-file /etcd-ssl-certs-dir/etcd-root-ca.pem \
+                --key-file /etcd-ssl-certs-dir/etcd.pem \
+                --peer-client-cert-auth \
+                --peer-trusted-ca-file /etcd-ssl-certs-dir/etcd-root-ca.pem \
+                --peer-cert-file /etcd-ssl-certs-dir/etcd-root-ca.pem \
+                --peer-key-file /etcd-ssl-certs-dir/etcd.pem \
+                --discovery=https://discovery.etcd.io/$UUID
 
-              ExecStop=/usr/bin/docker stop etcd-v3.3.8
+              ExecStop=/usr/bin/docker stop etcd-container
 
               [Install]
               WantedBy=multi-user.target
@@ -70,31 +134,3 @@ storage:
               systemctl enable etcd.service
 
               systemctl start etcd.service
-
-        - path: /etc/systemd/system/selinux-permissive.service
-          mode: 0644
-          contents:
-            inline: |
-              [Unit]
-              Description=Turn SELinux Permissive
-
-              [Service]
-              Type=oneshot
-              ExecStart=/usr/local/bin/selinux-permissive.sh
-
-              [Install]
-              WantedBy=multi-user.target
-
-        - path: /etc/systemd/system/start-etcd.service
-          mode: 0644
-          contents:
-            inline: |
-              [Unit]
-              Description=Start etcd with Docker
-
-              [Service]
-              Type=oneshot
-              ExecStart=/usr/local/bin/start-etcd.sh
-
-              [Install]
-              WantedBy=multi-user.target

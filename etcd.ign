@@ -15,6 +15,22 @@
   "storage": {
     "files": [
       {
+        "path": "/etc/certs/etcd-root-ca.pem",
+        "contents": {
+          "compression": "gzip",
+          "source": "data:;base64,H4sIAAAAAAAC/4TVtw77zLUE8J5PcXvhgkGkRBYudhmXOYmpo5izxCCGpzf+nw27sAGfcnAw3Q/z/38OijIy/48XXR9JiAe++FeKGQiJXMvzYH1UYEcQVOjFT7Im1sw6lKRvOo3QUWXuy/GgkMsuOLGqTQmqf5kJHFHHoAN26RIDAxoyIF8i2Hcjidw24cnzTXGEHpq1AelI8NFlCNVh+CJpCt1pBVMk+MaFGUK1W8K/wv9dhhCPWmDCqvvWXSNj3E5A4IgSABYPKhb8eeArjQeVCDrilquzHou8tk9cqNTIt4i0MBIg7l0vJfo68NjU21WvKYrxrCg8b4es9iv+rTpKp5rrqQQFEs1gCW9k/Vmf0esncIywqp3/2frRJt4DRuws/W1uUTfZ1yexcb9LtrWwPzz+1U4FsLnt17m5vtKGt9HMV7yvnzei1jbdj/ek4LEbDfdBIZT0brXPF/FL3Huvg6DxR+PMU5Ls6jqMLFlMtWeifflvLAPDonM48pxImgrEyMOuaSN8JPailzHwKkZ7EaLxjkt2Oj9vxKAgycLcYk6yJO8NE5GeO+rlw0y7g87Qienu4c7M9YE/3A+m76qgBRev8c4fxDeK1F9pkUrwce9Xg/T7qsnDxL5YkfqQlFIccythcnEenBW9N1kYYwMXCDWh0OHjK6Sb+2PQh8c9UAKBqvEISscdzQ+7+E0x8iJq1RapxZ73VEjTaPvIjfz9UuRtNu1LL4/gFicl7rTzJ1hP/Fkmg31NnkgA/Vd+oXNGFGSF/oVjHpl/Izc+DFOqIropUcCpL/2mkGZaGArafWZGc/Pbk9QKIKC9RUMX+nir0fP4cwcMdtfer/527I3kMqFYvuL6jnOR38OCqw5XLkMnlUTTFlC1zLlYMrNGNodnkw0Lx30cagxxOmPcXTjEfelcH7xor2amPel1PGtZS7k+TLJHWZ7v8nh7I3L02n/E0kpfMj489/GHFbUnfGyRB7sIQGo8/tiQ9lgIXMKFEOzChP4LLuKPlVyonBCD0Bto2MJUWZfgWNob7bRvEG38DBvL/zeaf5hZ/mlGBBpXzYtKGpgov+SJ6i0JFwjnnPhO2sykqrJJ34JE+EWXRzSnlznqwDeUz1hcTmmStU0Np82cBRuscNbxwO+k9AOxbOA6AhUF4IMLqGruU+Ojpi91KZapTfL9kL8D+yJVJ9TdFPhGnCsyhpaoEWf3uZ6EclaNEJJLuIl40Gn0N+XDZlwnn8+q5WIemnjLXLOsU8HPRrschc37ulhTzlBspXm/VOfBxkuPn1Sou5Im/tyXCklCHOlUmbffDp8BkbpLedMuScokwk5/kVZhZI+Km3/hDk55MbH3eTg6UR1uRab2QpB+2biBNpCcsukqHAyGoAUg+mhUONrPJf5tmNZuXnaND3LjUtmKirMt333wqxAdhDo5tudL9WYme9wp2msRM+zW0uvFzSeHUy4BcWJF/HqvOsTtQqJwUwvyJeEkH+oixfuF2swWk9c+DhK9AYTmC2ebyp0WGpIzDQqT6yv2GNfHsGgLWA6SzViCa6YFf48x8g5S5rbifvEzzRwWUlCG29tTiY31yUptwLy3lRB4DBLPkO0UmdutwfFDzQFgyyMimOkmPjPhS2r5Q66Jc3+TFmzZgv7G7yaEeyVvA0O0OPbw29PbwP5wA2pMt3mvYZvFkhSwhScxuL5IBNUSlhuSQ3yNgAs+K9V5fhrrGUuky4GtnXHf+SvP2JfZ8b+WqJoqZ99Cpdy6RP1Fixr/DftrxERT+M9h+3sAAAD//7T9wY31BgAA"
+        },
+        "mode": 493
+      },
+      {
+        "path": "/etc/certs/etcd.pem",
+        "contents": {
+          "compression": "gzip",
+          "source": "data:;base64,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"
+        },
+        "mode": 493
+      },
+      {
         "path": "/usr/local/bin/selinux-permissive.sh",
         "contents": {
           "compression": "",
@@ -26,25 +42,23 @@
         "path": "/usr/local/bin/start-etcd.sh",
         "contents": {
           "compression": "gzip",
-          "source": "data:;base64,H4sIAAAAAAAC/5RT3WrbTBC9n6fYjxiSXKzWX5PS1ES9KE7AEBpoGnqRhrJeTezB+yN2R3JN23cvWkutnaSFXGnn58wZjs4c/Kfm5NVcpyVAHanVjF+pbk/L0dEyJPbaoZAz8UPo9Uocfq8jeRaj/38eHsPt7Wxajo6ahqoF+mMAt6ooClkLxa5WyKZSlWYNcCA4iHUkRpEwtmRQPJBF8RCi6NrEmngppsGsMILRLN79GVEMiPPzi+tLuLv1xPcwxWQi1UzBl08mTINpHHrWubxkrtNEqQXxspkXJjhlQsSQ8niAu5stwT18xMQ6cqntWm/SEN6gKV8n+EQOQ8M3Q2oMV+SIP1xfzq4uytPxeDwGuPiGJneUqkkxS1vlncQXECI2Pn+ljK5/eOSy03kIO7m7tWR7UpwUZ326DbZxWO7LOslP2T1z28LEgkKfxBZtqDsRcmKyMy5vZoPRNu+X1XvMPtq1Ql/tiGT3gx/xSmkpMXppLKFn2USbRCf6RKm9OZNXJ2/e9hBdtRiZEr4I1RPViPGfgLNxDyBPTNru0L0ca2yTGKPksEIveOX/Uk+sGYXH9aAXJRNajJuyZ/qdKLKvKahRd0KDa0L9xDSJQ71rB4C7mU+srb2Hz9ozVu83pWssk2wSxoJ1XCBDdyfg2mduqItU2iRGV/XfvQaAbdKwFZVGF7yMaIOudgvo9dxujfIcLh/NfvVXAAAA//8M6AAKZgQAAA=="
+          "source": "data:;base64,H4sIAAAAAAAC/6RV32/bNhB+519xSw002UrJWbqtc6s9bEkBA8VaLAv24BkDQ52tgyhSI09yvB//+0BK3uzELZDsSeTd9919x+NRzz7Lb8nmtypUQrSeesX4G7X9y2JyWrnAVjUIcg5/gdrU8PzP1pNlmJz//fxM3NzML4vJaddRuUZ7JsQzmK9gPwhQAGxa3r4AFWpQa0UWOstkgDg6reMBkEWqMh5VuYWvpxBQO1uGF4B3xJnQrrNcTMWmIoOwAPkHnEz2M53A8jWUTgAEg9jCuQB4ZDkAQ5bJ6WlafHF+Fo20ggVMkgUk/h7FLV8DV2gFAADqysHJhyEVzD/sFZ3BDxXqGrau82CRN87X2cnAuiNOGlckSmdRiKYuyYNsIe+VzyvXYK6dx1yj5yB0CzmyHnb558dBezG4aSO+zEvFKjaGHWw8MUJA35NGWMWDXDkPEQYb4gouna7RC60YvvsvRLZjvHlz9f6tWNxY4qW4xKA9tUzOFg8iXDrdNWhZJXfF3IYwy/M1cdXdZto1SbULKb4Qi+shw1L8hIGV50KZjdqG3fYadfFVED9Tg67j651pKt5RQ/zj+7fzd1fFy+l0OhXi6g51QhR5F3y622USBb8KAN/Z9JXSN+PCIhfxZuy28YJEWVI7y4rsyJSyd6ZrsDg82llayri8BzvSoBEcgpFpL2O3ImutfUZuDIU9GtfG40uGWX+RXWSvEi6VZJxWJhWWzv2+7IOpGL1RXkr2QK2hwGilNoSWZedNgNSuWZ4fBJp9efHNtyNHlT16poCPo42pWkT/acar6cggS0zK7CV8AlmbLjB6ya5GC1zbj/gDx/m1uBn9Y22xUVJ1XI1m9hFeSq1kmqAjLR1M3jmWWmUt7m5aCvVYUo3bT3P2sOl0PqI7+f6H+CH2UypIzMeUUVLQrke/LXZN/teSJSi5fBL/Pbtpd+2DYQ/s2ntjLMRibgMrY5biF2UZy++3RdMZJtkF9Bkrv0YW8Y0TTX/k/UsPcNgGxqYcvwcAIQajZgOlwsZZ6dE4Ve470KpbM4zqMV567w68/wQAAP//M9sXGKEHAAA="
         },
         "mode": 493
+      }
+    ]
+  },
+  "systemd": {
+    "units": [
+      {
+        "contents": "[Unit]\nDescription=Turn SELinux Permissive\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/selinux-permissive.sh\n\n[Install]\nWantedBy=multi-user.target\n",
+        "enabled": true,
+        "name": "selinux-permissive.service"
       },
       {
-        "path": "/etc/systemd/system/selinux-permissive.service",
-        "contents": {
-          "compression": "",
-          "source": "data:,%5BUnit%5D%0ADescription%3DTurn%20SELinux%20Permissive%0A%0A%5BService%5D%0AType%3Doneshot%0AExecStart%3D%2Fusr%2Flocal%2Fbin%2Fselinux-permissive.sh%0A%0A%5BInstall%5D%0AWantedBy%3Dmulti-user.target%0A"
-        },
-        "mode": 420
-      },
-      {
-        "path": "/etc/systemd/system/start-etcd.service",
-        "contents": {
-          "compression": "",
-          "source": "data:,%5BUnit%5D%0ADescription%3DStart%20etcd%20with%20Docker%0A%0A%5BService%5D%0AType%3Doneshot%0AExecStart%3D%2Fusr%2Flocal%2Fbin%2Fstart-etcd.sh%0A%0A%5BInstall%5D%0AWantedBy%3Dmulti-user.target%0A"
-        },
-        "mode": 420
+        "contents": "[Unit]\nDescription=Start etcd with Docker\nAfter=selinux-permissive.service\nRequires=selinux-permissive.service\nRequires=docker.service\nAfter=docker.service\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/start-etcd.sh\n\n[Install]\nWantedBy=multi-user.target\n",
+        "enabled": true,
+        "name": "start-etcd.service"
       }
     ]
   }
