@@ -42,7 +42,7 @@
         "path": "/etc/systemd/system/start-etcd.service",
         "contents": {
           "compression": "",
-          "source": "data:,%5BUnit%5D%0ADescription%3DStart%20etcd%20with%20Docker%0A%0A%5BService%5D%0AType%3Doneshot%0AExecStart%3D%2Fusr%2Flocal%2Fbin%2Fstart-etc.sh%0A%0A%5BInstall%5D%0AWantedBy%3Dmulti-user.target%0A"
+          "source": "data:,%5BUnit%5D%0ADescription%3DStart%20etcd%20with%20Docker%0A%0A%5BService%5D%0AType%3Doneshot%0AExecStart%3D%2Fusr%2Flocal%2Fbin%2Fstart-etcd.sh%0A%0A%5BInstall%5D%0AWantedBy%3Dmulti-user.target%0A"
         },
         "mode": 420
       }
