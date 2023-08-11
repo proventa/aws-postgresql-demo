@@ -88,6 +88,7 @@
         state: running
         key_name: "{{ key_pair.key.name }}"
         tags: "{{ ec2_tags }}"
+        user_data: '{{ lookup("file", "/root/aws-postgresql-demo/etcd.ign")|string }}'
       register: ec2_instance
 
     - name: Ensure the group [ "{{ ec2_tags.cluster }}" ] exists in the inventory file
