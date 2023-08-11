@@ -1,6 +1,7 @@
 #!/bin/bash
 
 private_ipv4=$(hostname -I | awk '{print $1}')
+UUID=$(uuidgen)
 
 mkdir -p /tmp/etcd/data
 
@@ -26,6 +27,7 @@ ExecStart=/usr/bin/docker \
   --net=host \
   --name etcd-v3.3.8 \
   --volume=/tmp/etcd/data:/etcd-data \
+  --volume=/etc/ssl/certs:/etc/ssl/certs:ro \
   gcr.io/etcd-development/etcd:v3.3.8 \
   /usr/local/bin/etcd \
   --name etcd-$private_ipv4 \
@@ -35,7 +37,8 @@ ExecStart=/usr/bin/docker \
   --listen-peer-urls http://$private_ipv4:2380 \
   --initial-advertise-peer-urls http://$private_ipv4:2380 \
   --initial-cluster-token tkn \
-  --initial-cluster-state new
+  --initial-cluster-state new \
+  --discovery=https://discovery.etcd.io/$UUID
 
 ExecStop=/usr/bin/docker stop etcd-v3.3.8
 
