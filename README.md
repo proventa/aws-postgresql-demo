@@ -1,5 +1,21 @@
 # AWS PostgreSQL Demo
 
+This repository hosts the concept of running a containerized and highly available [PostgreSQL](https://www.postgresql.org/) cluster with desaster recovery and monitoring on [Fedora CoreOS](https://fedoraproject.org/coreos/). The CoreOS instances are provisioned with Ansible on AWS.
+
+The different used components are listed below:
+
+* [Spilo](https://github.com/zalando/spilo)
+  * [Patroni](https://github.com/zalando/patroni)
+* [etcd](https://github.com/coreos/etcd)
+* [postgres_exporter](https://github.com/prometheus-community/postgres_exporter)
+* [Prometheus](https://github.com/prometheus/prometheus)
+* [Grafana](https://github.com/grafana/grafana)
+
+![Architecture](docs/architecture.svg)
+
+The above diagram shows the concept in a rather pragmatic manner: On the left is 3-member etcd HA-cluster. The middle consists of a 3-member PostgreSQL HA-cluster. And the right side shows one instance each with Prometheus and Grafana. AWS S3 object store is used for backups.
+
+
 ## Preqrequisites
 1. Make sure that you have an AWS account and have configured your AWS CLI with your credentials.
 2. Make sure that you have Ansible installed on your machine.
