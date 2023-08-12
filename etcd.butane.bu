@@ -20,6 +20,19 @@ systemd:
           [Install]
           WantedBy=multi-user.target
 
+      - name: create-local-certs.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Create certs for etcd
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/create-local-certs.sh
+
+          [Install]
+          WantedBy=multi-user.target
+
       - name: start-etcd.service
         enabled: true
         contents: |
@@ -29,6 +42,8 @@ systemd:
           Requires=selinux-permissive.service
           Requires=docker.service
           After=docker.service
+          Requires=create-local-certs.service
+          After=create-local-certs.service
 
           [Service]
           Type=oneshot
@@ -43,10 +58,15 @@ storage:
           contents:
             local: certs/etcd-root-ca.pem
 
-        - path: /etc/certs/etcd.pem
+        - path: /etc/certs/etcd-root-ca-key.pem
           mode: 0755
           contents:
-            local: certs/etcd.pem
+            local: certs/etcd-root-ca-key.pem
+
+        - path: /etc/certs/etcd-gencert.json
+          mode: 0755
+          contents:
+            local: certs/etcd-gencert.json
 
         - path: /usr/local/bin/selinux-permissive.sh
           mode: 0755
@@ -56,6 +76,68 @@ storage:
               setenforce 0
               sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
 
+        - path: /usr/local/bin/create-local-certs.sh
+          mode: 0755
+          contents:
+            inline: |
+              #!/bin/bash
+
+              mkdir -p /tmp/certs
+
+              private_ipv4=$(hostname -I | awk '{print $1}')
+
+              # If private_ipv4 is empty, ask again until it is not empty. If already 60 seconds, exit.
+              count=0
+              while [ -z "$private_ipv4" ]; do
+              sleep 1
+              private_ipv4=$(hostname -I | awk '{print $1}')
+              count=$((count+1))
+              if [ $count -eq 60 ]; then
+                  echo "Private IPv4 is empty. Check your network."
+                  exit 1
+              fi
+              done
+
+              curl -L https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o /tmp/cfssl
+              chmod +x /tmp/cfssl
+              mv /tmp/cfssl /usr/local/bin/cfssl
+
+              curl -L https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -o /tmp/cfssljson
+              chmod +x /tmp/cfssljson
+              mv /tmp/cfssljson /usr/local/bin/cfssljson
+
+              cat > /tmp/certs/$private_ipv4-ca-csr.json <<EOF
+              {
+                  "key": {
+                      "algo": "rsa",
+                      "size": 4096
+                  },
+                  "names": [
+                      {
+                      "O": "Proventa",
+                      "OU": "AWS Postgres Demo",
+                      "L": "Frankfurt",
+                      "ST": "Hesse",
+                      "C": "Germany"
+                      }
+                  ],
+                  "CN": "$private_ipv4",
+                  "hosts": [
+                      "127.0.0.1",
+                      "localhost",
+                      "$private_ipv4"
+                  ]
+              }
+              EOF
+
+              cfssl gencert \
+              --ca /etc/certs/etcd-root-ca.pem \
+              --ca-key /etc/certs/etcd-root-ca-key.pem \
+              --config /etc/certs/etcd-gencert.json \
+              /tmp/certs/$private_ipv4-ca-csr.json | cfssljson --bare /tmp/certs/$private_ipv4
+
+              mv /tmp/certs/* /etc/certs
+
         - path: /usr/local/bin/start-etcd.sh
           mode: 0755
           contents:
@@ -63,7 +145,6 @@ storage:
               #!/bin/bash
 
               private_ipv4=$(hostname -I | awk '{print $1}')
-              UUID=$(uuidgen)
 
               # If private_ipv4 is empty, ask again until it is not empty. If already 60 seconds, exit.
               count=0
@@ -77,16 +158,13 @@ storage:
                 fi
               done
 
-              mkdir -p /var/home/core/certs
-              cp /etc/certs/* /var/home/core/certs
-
               mkdir -p /tmp/etcd/data
 
               # to write service file for etcd with Docker
               cat > /tmp/etcd.service <<EOF
               [Unit]
               Description=etcd with Docker
-              Documentation=httpss://github.com/coreos/etcd
+              Documentation=https://github.com/coreos/etcd
 
               [Service]
               Restart=always
@@ -100,7 +178,7 @@ storage:
                 --net=host \
                 --name etcd-container \
                 --volume=/tmp/etcd/data:/etcd-data \
-                --volume=/var/home/core/certs:/etcd-ssl-certs-dir \
+                --volume=/etc/certs:/etc/ssl/certs \
                 gcr.io/etcd-development/etcd:v3.3.8 \
                 /usr/local/bin/etcd \
                 --name etcd-$private_ipv4 \
@@ -112,14 +190,15 @@ storage:
                 --initial-cluster-token tkn \
                 --initial-cluster-state new \
                 --client-cert-auth \
-                --trusted-ca-file /etcd-ssl-certs-dir/etcd-root-ca.pem \
-                --cert-file /etcd-ssl-certs-dir/etcd-root-ca.pem \
-                --key-file /etcd-ssl-certs-dir/etcd.pem \
+                --trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+                --cert-file /etc/ssl/certs/$private_ipv4.pem \
+                --key-file /etc/ssl/certs/$private_ipv4-key.pem \
                 --peer-client-cert-auth \
-                --peer-trusted-ca-file /etcd-ssl-certs-dir/etcd-root-ca.pem \
-                --peer-cert-file /etcd-ssl-certs-dir/etcd-root-ca.pem \
-                --peer-key-file /etcd-ssl-certs-dir/etcd.pem \
-                --discovery=https://discovery.etcd.io/$UUID
+                --peer-trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+                --peer-cert-file /etc/ssl/certs/$private_ipv4.pem \
+                --peer-key-file /etc/ssl/certs/$private_ipv4-key.pem \
+                --discovery=https://discovery.etcd.io/cf037f8c6bdc9a73be494de1f49d13ff 
+
 
               ExecStop=/usr/bin/docker stop etcd-container
 
