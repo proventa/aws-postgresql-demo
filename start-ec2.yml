@@ -75,9 +75,11 @@
         key_material: "{{ lookup('file', '/root/aws-postgresql-demo/keys/postgres-demo.pub') }}"
       register: key_pair
 
+    - name: Prepare TLS Certs for HTTPS etcd
+      ansible.builtin.shell: $PWD/gen-root-ca.sh
+
     - name: Prepare ignition file # Converting Butane to Ignition
-      ansible.builtin.shell: |
-        podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.bu > etcd.ign
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.bu > etcd.ign
 
     - name: Start Fedora CoreOS instances
       amazon.aws.ec2_instance:
