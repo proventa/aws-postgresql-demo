@@ -5,7 +5,7 @@
   vars:
     num_of_instances: 3
     ec2_tags:
-      cluster: etcd
+      cluster: containerized-etcd
   tasks:
     - name: Ensure that VPC exists
       amazon.aws.ec2_vpc_net:

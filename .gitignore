@@ -3,3 +3,4 @@ certs/**
 bin/**
 etcd-discovery-cluster.txt
 ansible/hosts
+etcd.ign
