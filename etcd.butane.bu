@@ -162,6 +162,7 @@ storage:
               done
 
               mkdir -p /tmp/etcd/data
+              discovery_url=$(cat /usr/local/etcd/etcd-discovery-cluster.txt)
 
               # to write service file for etcd with Podman
               cat > /tmp/etcd.service <<EOF
@@ -200,8 +201,7 @@ storage:
                 --peer-trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
                 --peer-cert-file /etc/ssl/certs/$private_ipv4.pem \
                 --peer-key-file /etc/ssl/certs/$private_ipv4-key.pem \
-                --discovery=https://discovery.etcd.io/cf037f8c6bdc9a73be494de1f49d13ff 
-
+                --discovery=$discovery_url 
 
               ExecStop=/usr/bin/podman stop etcd-container
 
