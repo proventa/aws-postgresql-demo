@@ -64,6 +64,10 @@
             ports:
               - 22
             cidr_ip: "0.0.0.0/0"
+          - proto: all
+            from_port: 0
+            to_port: 65535
+            cidr_ip: "10.0.0.0/16"
         tags:
           env: demo
         state: present
@@ -78,8 +82,11 @@
     - name: Prepare TLS Certs for HTTPS etcd
       ansible.builtin.shell: $PWD/gen-root-ca.sh
 
+    - name: Create a new etcd discovery service cluster
+      ansible.builtin.shell: curl https://discovery.etcd.io/new?size=3 > etcd-discovery-cluster.txt
+
     - name: Prepare ignition file # Converting Butane to Ignition
-      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.bu > etcd.ign
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.yml > etcd.ign
 
     - name: Start Fedora CoreOS instances
       amazon.aws.ec2_instance:

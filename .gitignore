@@ -1,3 +1,4 @@
 keys/**
 certs/**
 bin/**
+etcd-discovery-cluster.txt
