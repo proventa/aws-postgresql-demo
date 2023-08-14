@@ -37,11 +37,9 @@ systemd:
         enabled: true
         contents: |
           [Unit]
-          Description=Start etcd with Docker
+          Description=Start etcd with Podman
           After=selinux-permissive.service
           Requires=selinux-permissive.service
-          Requires=docker.service
-          After=docker.service
           Requires=create-local-certs.service
           After=create-local-certs.service
 
@@ -160,10 +158,10 @@ storage:
 
               mkdir -p /tmp/etcd/data
 
-              # to write service file for etcd with Docker
+              # to write service file for etcd with Podman
               cat > /tmp/etcd.service <<EOF
               [Unit]
-              Description=etcd with Docker
+              Description=etcd with Podman
               Documentation=https://github.com/coreos/etcd
 
               [Service]
@@ -172,7 +170,7 @@ storage:
               TimeoutStartSec=0
               LimitNOFILE=40000
 
-              ExecStart=/usr/bin/docker \
+              ExecStart=/usr/bin/podman \
                 run \
                 --rm \
                 --net=host \
@@ -200,7 +198,7 @@ storage:
                 --discovery=https://discovery.etcd.io/cf037f8c6bdc9a73be494de1f49d13ff 
 
 
-              ExecStop=/usr/bin/docker stop etcd-container
+              ExecStop=/usr/bin/podman stop etcd-container
 
               [Install]
               WantedBy=multi-user.target
