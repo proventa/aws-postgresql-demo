@@ -5,6 +5,9 @@ passwd:
       - name: core
         ssh_authorized_keys:
           - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiGUz4OVm53+SzmnHTc4cg3EbzqRhBGJgJIkNyG44p+Jf5HnMw8fTD1rDx13hkq5A3075y2NQu83yz/MFSmxXiZ3qvBJfYVS3rGx+xOPk7Hh21i5mYo25UBbvzveOHFGvR7A7BMH+GcvwCIfBJ9ou3uS4kmxJbyb+aqtU80POeBTtHlV+S7i9VpLrIJ8upFUAfYvHcy7Laz/B4EgNxRtpQkIRv+ISYBiyXs5EtRTQCEMLEYhSUapcT8xJgHKaOun3c6xQe5bqklLHnrkBe23yK/GSgv8Ql1/xkbdQQtZ67ua/sSyYgGYDQwPrd0Xvm0TNA5pwqbXOApITsY2l87P6eV1o+9TVXnF2vqnHN4fn4Gw6+WKPBYWFtSfPRILPADrPyBFf4qzRXyFW+VUzZNtRwev+rcyTtoPT2IwEpZjuOie34sEuoGojPzk4pEvA8Q9ePx5rvKWv9Ip9sXaF6mktGwR3Z76gaBxHf92EzGy3eKV79OyiOfokaPPXnu8PnDhU= core
+      - name: podman_user
+        ssh_authorized_keys:
+          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDZ+sWZPqG4rQgtmJfv/X3InQa1MU9D77VTUEdwkyMXj7V+z7V0Y7qtMoEFAqSwku1u6+g9IeOVMQtn/r9X47Xln7wOELK/4DahjIUsrRAqXI3Bgdnmx5l65A+lHWNN4MZpFGUci0IcBSKNLy+GbutEeEo6FaQYieo+vIC/mvFNhirUb13S4a3Gv30xIPZ+CWiJlznd3a37rOFs60ZnrxJXuSBx3KvZISx5w/xLHn1tuuDRRxldeTHWqm3MaHHQNgl8XjES3Yo70wyREs42Iq7F2c2COUV4wTS2DrgvHVnHrLJTtDHGXrVvUpjFoZZxI5I01EHFc0IFGUuF3B+nUmBw3ZV2SuqetWEJly3QJ0yZyT2M6iCEUBVW/tPlXPs+saw/cVJGbQ0y8KYkyw+O8qxXu6BSGh75zKj9ceoT1a4NX+LFPaskjKdAJ4YEJvHnD6bJWv1i+oZ8FtopoQ/gNyt490spdm3H88ZeG2oOcsuvV2GI/BrY/wnJbtbRV77bDS0= podman_user
 systemd:
     units:
       - name: selinux-permissive.service
