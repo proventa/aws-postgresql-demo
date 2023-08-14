@@ -1,13 +1,18 @@
+# Make sure bin and certs directories exist and clean
 mkdir -p bin && rm -f bin/cfssl* && rm -rf certs && mkdir -p certs
 
+# Download cfssl binaries
 curl -L https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o bin/cfssl
 chmod +x bin/cfssl
 
+# Download cfssljson binaries
 curl -L https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -o bin/cfssljson
 chmod +x bin/cfssljson
 
+# Make certs directory to store certificates
 mkdir -p certs
 
+# Generate root CA certificate bundle (Public Certificate and Private Key)
 cat > certs/etcd-root-ca-csr.json <<EOF
 {
   "key": {
@@ -28,7 +33,7 @@ cat > certs/etcd-root-ca-csr.json <<EOF
 EOF
 cfssl gencert --initca=true certs/etcd-root-ca-csr.json | cfssljson --bare certs/etcd-root-ca
 
-# cert-generation configuration
+# cert-generation configuration (Used for client certificates)
 cat > certs/etcd-gencert.json <<EOF
 {
   "signing": {
