@@ -67,12 +67,16 @@
             to_port: 65535
             cidr_ip: "10.0.0.0/16"
         state: present
+        tags:
+          env: demo
       register: sg
 
     - name: create key pair using key_material obtained using 'file' lookup plugin
       amazon.aws.ec2_key:
-        name: postgres-demo
-        key_material: "{{ lookup('file', 'keys/postgres-demo.pub') }}"
+        name: etcd
+        key_material: "{{ lookup('file', 'keys/core.pub') }}"
+        tags:
+          env: demo
       register: key_pair
 
     - name: Prepare TLS Certs for HTTPS etcd
