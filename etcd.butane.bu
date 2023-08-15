@@ -105,7 +105,7 @@ storage:
                 --volume=/tmp/etcd/data:/etcd-data \
                 --volume=/etc/certs:/etc/certs \
                 --volume=/etc/ssl/certs:/etc/ssl/certs \
-                gcr.io/etcd-development/etcd:v3.3.8 \
+                gcr.io/etcd-development/etcd:v3.5.9 \
                 /usr/local/bin/etcd \
                 --name etcd-$private_ipv4 \
                 --data-dir /etcd-data \
