@@ -4,10 +4,10 @@ passwd:
     users:
       - name: core
         ssh_authorized_keys:
-          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiGUz4OVm53+SzmnHTc4cg3EbzqRhBGJgJIkNyG44p+Jf5HnMw8fTD1rDx13hkq5A3075y2NQu83yz/MFSmxXiZ3qvBJfYVS3rGx+xOPk7Hh21i5mYo25UBbvzveOHFGvR7A7BMH+GcvwCIfBJ9ou3uS4kmxJbyb+aqtU80POeBTtHlV+S7i9VpLrIJ8upFUAfYvHcy7Laz/B4EgNxRtpQkIRv+ISYBiyXs5EtRTQCEMLEYhSUapcT8xJgHKaOun3c6xQe5bqklLHnrkBe23yK/GSgv8Ql1/xkbdQQtZ67ua/sSyYgGYDQwPrd0Xvm0TNA5pwqbXOApITsY2l87P6eV1o+9TVXnF2vqnHN4fn4Gw6+WKPBYWFtSfPRILPADrPyBFf4qzRXyFW+VUzZNtRwev+rcyTtoPT2IwEpZjuOie34sEuoGojPzk4pEvA8Q9ePx5rvKWv9Ip9sXaF6mktGwR3Z76gaBxHf92EzGy3eKV79OyiOfokaPPXnu8PnDhU= core
-      - name: podman_user
+          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC27aMRiumzkPxPDRsm5/DPSzkw0RKD1rD0fSabUEgWgg/RkHgWFQqoGp0PbSf7WzAJ/tT1ciBe3ZzXYB3DQh4uvJrUEcWPMOOW1PdlN1imn/r7SwxrcN4nGfmDrUG4NJyPwUhK0STsgxAiC5BiIQZOI9cXMPH38tSB/pTx8wBjhiLQTkEYdqJ0KakPChjR4awCOJZ+pYjatcyG0+VHlbgN8IepWFpYtAfGa1O8/SadcnUYdRvNJbV37u0xqFMnSpLIPYr+zqN9xB4uSVUo16FjtRYpgoSLFtlpgYWWbl96GS2lg4DNAbYrM6gbyimZrRzgV7ujKTMpcvHY9B3ymL9J75YPOzoHfCuUX+UHgCAMgsgTNLqUSyquwWVYVetGFEAdLbSB6dcGJ+gHKK/pgca6QsxcEht0QiUHrF0wump6Xl4+Sg/jDYwyl1fH8JMD70VQRSxU7W2m6yiKHU1c+V+cgNmsHVX2se4QNltcGd6RaqmxhVwSB48YCvKJ5jbp6ac= core
+      - name: etcd-user
         ssh_authorized_keys:
-          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDZ+sWZPqG4rQgtmJfv/X3InQa1MU9D77VTUEdwkyMXj7V+z7V0Y7qtMoEFAqSwku1u6+g9IeOVMQtn/r9X47Xln7wOELK/4DahjIUsrRAqXI3Bgdnmx5l65A+lHWNN4MZpFGUci0IcBSKNLy+GbutEeEo6FaQYieo+vIC/mvFNhirUb13S4a3Gv30xIPZ+CWiJlznd3a37rOFs60ZnrxJXuSBx3KvZISx5w/xLHn1tuuDRRxldeTHWqm3MaHHQNgl8XjES3Yo70wyREs42Iq7F2c2COUV4wTS2DrgvHVnHrLJTtDHGXrVvUpjFoZZxI5I01EHFc0IFGUuF3B+nUmBw3ZV2SuqetWEJly3QJ0yZyT2M6iCEUBVW/tPlXPs+saw/cVJGbQ0y8KYkyw+O8qxXu6BSGh75zKj9ceoT1a4NX+LFPaskjKdAJ4YEJvHnD6bJWv1i+oZ8FtopoQ/gNyt490spdm3H88ZeG2oOcsuvV2GI/BrY/wnJbtbRV77bDS0= podman_user
+          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiiIFUbCLhwdlcmujInBbolBbnI7Jw46isXHUQANQkkRwUlcRUBboDapadmaaEMNAn2GyduIgOZutSzXcqhTOd9GlHa+ZRn/lEkTIcVGoMOhdws4lblVVC8uO45DVvObiUULGyNp8SoBkkhN+c8OmDBVIoUVmBqcSjE9OOHfCFyu7h19udl7ycVb/+JX5lp1/fQ9UTvrka1TiA/aRzWdWKrYaFNj+DWYk9Ng0HOEsqQH4+uSnogXae69YXmRH0KTg6feLu1LJBRFgumfYCpbi6f9/HVC9TVAIOUoalad6ID/D2fUWivCVgVI3jzQSpDVLnuVswehzkX8ekk2b8EmbG0tjq5P3gd03XFE+31qGGpwbTuasFmGsNGolcH4A6aL2HRerchfY2y1D+Jyk8rZkkzvV+fBwR1kaSgAsiXpZePFk2w0rMjk8BZZ2JqzlW6pXBgVaznlyzZeBVnqUe/vWbN5NbfTe62NQim1gnKzRgQMX38VQove2mGqLALjre+cE= etcd-user
 systemd:
     units:
       - name: selinux-permissive.service
@@ -23,17 +23,77 @@ systemd:
           [Install]
           WantedBy=multi-user.target
 
-      - name: start-etcd.service
+      - name: setup-network-environment.service
         enabled: true
         contents: |
           [Unit]
-          Description=Start etcd with Podman
+          Description=Setup Network Environment
+          Documentation=https://github.com/kelseyhightower/setup-network-environment
+
+          Requires=network-online.target
+          After=network-online.target
+
+          [Service]
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStartPre=curl -o /opt/bin/setup-network-environment -LJO https://github.com/kelseyhightower/setup-network-environment/releases/download/v1.0.0/setup-network-environment
+
+          ExecStartPre=/usr/bin/chmod +x /opt/bin/setup-network-environment
+          ExecStart=/opt/bin/setup-network-environment
+          ExecStartPost=/usr/local/bin/append-discovery-addr.sh
+          ExecStartPost=/usr/bin/loginctl enable-linger etcd-user
+          RemainAfterExit=yes
+          Type=oneshot
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: etcd.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=etcd with Podman
+          Documentation=https://github.com/coreos/etcd
+
           After=selinux-permissive.service
           Requires=selinux-permissive.service
 
+          Requires=setup-network-environment.service
+          After=setup-network-environment.service
+
           [Service]
-          Type=oneshot
-          ExecStart=/usr/local/bin/start-etcd.sh
+          User=etcd-user
+          EnvironmentFile=/etc/network-environment
+          Restart=always
+          RestartSec=5s
+          TimeoutStartSec=0
+          LimitNOFILE=40000
+
+          ExecStartPre=-/usr/bin/mkdir -p ${HOME}/etcd-data
+          ExecStart=/usr/bin/podman \
+            run \
+            --rm \
+            --net=host \
+            --name etcd-container \
+            --volume=${HOME}/etcd-data:/etcd-data \
+            --volume=/etc/certs:/etc/certs \
+            --volume=/etc/ssl/certs:/etc/ssl/certs \
+            gcr.io/etcd-development/etcd:v3.5.9 \
+            /usr/local/bin/etcd \
+            --name etcd-${DEFAULT_IPV4} \
+            --data-dir /etcd-data \
+            --listen-client-urls https://${DEFAULT_IPV4}:2379,http://127.0.0.1:2379 \
+            --advertise-client-urls https://${DEFAULT_IPV4}:2379 \
+            --listen-peer-urls https://${DEFAULT_IPV4}:2380 \
+            --initial-advertise-peer-urls https://${DEFAULT_IPV4}:2380 \
+            --client-cert-auth \
+            --auto-tls \
+            --trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+            --peer-client-cert-auth \
+            --peer-auto-tls \
+            --peer-trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+            --discovery=${ETCD_DISCOVERY_ADDR}
+
+          ExecStop=/usr/bin/podman rm -f etcd-container
 
           [Install]
           WantedBy=multi-user.target
@@ -61,76 +121,26 @@ storage:
               #!/bin/bash
               setenforce 0
               sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+              exit 0
 
-        - path: /usr/local/bin/start-etcd.sh
+        - path: /usr/local/bin/append-discovery-addr.sh
           mode: 0755
           contents:
             inline: |
               #!/bin/bash
-
-              private_ipv4=$(hostname -I | awk '{print $1}')
-
-              # If private_ipv4 is empty, ask again until it is not empty. If already 60 seconds, exit.
-              count=0
-              while [ -z "$private_ipv4" ]; do
+              MAX_RETRIES=10
+              RETRIES=0
+              while [ ! -f /usr/local/etcd/etcd-discovery-cluster.txt ]; do
                 sleep 1
-                private_ipv4=$(hostname -I | awk '{print $1}')
-                count=$((count+1))
-                if [ $count -eq 60 ]; then
-                  echo "Private IPv4 is empty. Check your network."
+                RETRIES=$((RETRIES+1))
+                if [ $RETRIES -eq $MAX_RETRIES ]; then
+                  echo "Failed to find discovery file after $MAX_RETRIES retries"
                   exit 1
                 fi
               done
 
-              mkdir -p /tmp/etcd/data
-              discovery_url=$(cat /usr/local/etcd/etcd-discovery-cluster.txt)
+              ETCD_DISCOVERY_ADDR=$(cat /usr/local/etcd/etcd-discovery-cluster.txt)
 
-              # to write service file for etcd with Podman
-              cat > /tmp/etcd.service <<EOF
-              [Unit]
-              Description=etcd with Podman
-              Documentation=https://github.com/coreos/etcd
-
-              [Service]
-              Restart=always
-              RestartSec=5s
-              TimeoutStartSec=0
-              LimitNOFILE=40000
-
-              ExecStart=/usr/bin/podman \
-                run \
-                --rm \
-                --net=host \
-                --name etcd-container \
-                --volume=/tmp/etcd/data:/etcd-data \
-                --volume=/etc/certs:/etc/certs \
-                --volume=/etc/ssl/certs:/etc/ssl/certs \
-                gcr.io/etcd-development/etcd:v3.5.9 \
-                /usr/local/bin/etcd \
-                --name etcd-$private_ipv4 \
-                --data-dir /etcd-data \
-                --listen-client-urls https://$private_ipv4:2379,http://127.0.0.1:2379 \
-                --advertise-client-urls https://$private_ipv4:2379 \
-                --listen-peer-urls https://$private_ipv4:2380 \
-                --initial-advertise-peer-urls https://$private_ipv4:2380 \
-                --client-cert-auth \
-                --auto-tls \
-                --trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
-                --peer-client-cert-auth \
-                --peer-auto-tls \
-                --peer-trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
-                --discovery=$discovery_url 
-
-              ExecStop=/usr/bin/podman rm -f etcd-container
-
-              [Install]
-              WantedBy=multi-user.target
+              tee -a /etc/network-environment <<EOF
+              ETCD_DISCOVERY_ADDR=${ETCD_DISCOVERY_ADDR}
               EOF
-
-              mv /tmp/etcd.service /etc/systemd/system/etcd.service
-
-              systemctl daemon-reload
-
-              systemctl enable etcd.service
-
-              systemctl start etcd.service
