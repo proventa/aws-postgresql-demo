@@ -58,16 +58,14 @@
         vpc_id: "{{ vpc_net.vpc.id }}"
         region: eu-central-1
         rules:
-          - proto: tcp
+          - proto: tcp # SSH
             ports:
               - 22
             cidr_ip: "0.0.0.0/0"
-          - proto: all
+          - proto: all # Internal Comms between EC2 instances
             from_port: 0
             to_port: 65535
             cidr_ip: "10.0.0.0/16"
-        tags:
-          env: demo
         state: present
       register: sg
 
@@ -78,10 +76,10 @@
       register: key_pair
 
     - name: Prepare TLS Certs for HTTPS etcd
-      ansible.builtin.shell: $PWD/gen-root-ca.sh
+      ansible.builtin.shell: ./gen-root-ca.sh
 
     - name: Create a new etcd discovery service cluster
-      ansible.builtin.shell: curl https://discovery.etcd.io/new?size=3 > etcd-discovery-cluster.txt
+      ansible.builtin.shell: curl https://discovery.etcd.io/new?size={{ num_of_instances }} > etcd-discovery-cluster.txt
 
     - name: Prepare ignition file # Converting Butane to Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.bu > etcd.ign
@@ -108,7 +106,7 @@
         line: "[{{ ec2_tags.cluster }}]"
         state: present
       
-    - name: Add the insance ID to the group 'etcd' in the inventory file
+    - name: Add the insance ID to the group in the inventory file
       ansible.builtin.lineinfile:
         path: "ansible/hosts"
         line: "{{ item.instance_id }} ansible_host={{ item.public_ip_address }}"
