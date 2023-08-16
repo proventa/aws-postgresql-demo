@@ -40,8 +40,27 @@ systemd:
           ExecStartPre=/usr/bin/chmod +x /opt/bin/setup-network-environment
           ExecStart=/opt/bin/setup-network-environment
           ExecStartPost=/usr/local/bin/append-discovery-addr.sh
-          ExecStartPost=/usr/bin/loginctl enable-linger etcd-user
           RemainAfterExit=yes
+          Type=oneshot
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: enable-linger.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Enable Linger for etcd-user
+
+          After=setup-network-environment.service
+          Requires=setup-network-environment.service
+
+          After=selinux-permissive.service
+          Requires=selinux-permissive.service
+
+          [Service]
+          User=etcd-user
+          ExecStart=/usr/bin/loginctl enable-linger etcd-user
           Type=oneshot
 
           [Install]
@@ -60,6 +79,9 @@ systemd:
           Requires=setup-network-environment.service
           After=setup-network-environment.service
 
+          Requires=enable-linger.service
+          After=enable-linger.service
+
           [Service]
           User=etcd-user
           EnvironmentFile=/etc/network-environment
@@ -68,7 +90,8 @@ systemd:
           TimeoutStartSec=0
           LimitNOFILE=40000
 
-          ExecStartPre=-/usr/bin/mkdir -p ${HOME}/etcd-data
+          ExecStartPre=/usr/bin/mkdir -p ${HOME}/etcd-data
+          ExecStartPre=/usr/bin/podman rm -f etcd-container
           ExecStart=/usr/bin/podman \
             run \
             --rm \
