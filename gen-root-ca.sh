@@ -40,20 +40,3 @@ cat > certs/etcd-root-ca-csr.json <<EOF
 }
 EOF
 cfssl gencert --initca=true certs/etcd-root-ca-csr.json | cfssljson --bare certs/etcd-root-ca
-
-# cert-generation configuration (Used for client certificates)
-cat > certs/etcd-gencert.json <<EOF
-{
-  "signing": {
-    "default": {
-        "usages": [
-          "signing",
-          "key encipherment",
-          "server auth",
-          "client auth"
-        ],
-        "expiry": "87600h"
-    }
-  }
-}
-EOF
