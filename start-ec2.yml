@@ -83,7 +83,7 @@
       register: sg
 
     - name: Prepare TLS Certs for HTTPS etcd comms and keys for the etcd cluster
-      ansible.builtin.shell: ./gen-root-ca.sh && ./gen-ec2-certs.sh
+      ansible.builtin.shell: ./gen-root-ca.sh && ./gen-ec2-keys.sh
 
     - name: create key pair using key_material obtained using 'file' lookup plugin
       amazon.aws.ec2_key:
