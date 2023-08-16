@@ -3,11 +3,11 @@ version: 1.5.0
 passwd:
     users:
       - name: core
-        ssh_authorized_keys:
-          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC27aMRiumzkPxPDRsm5/DPSzkw0RKD1rD0fSabUEgWgg/RkHgWFQqoGp0PbSf7WzAJ/tT1ciBe3ZzXYB3DQh4uvJrUEcWPMOOW1PdlN1imn/r7SwxrcN4nGfmDrUG4NJyPwUhK0STsgxAiC5BiIQZOI9cXMPH38tSB/pTx8wBjhiLQTkEYdqJ0KakPChjR4awCOJZ+pYjatcyG0+VHlbgN8IepWFpYtAfGa1O8/SadcnUYdRvNJbV37u0xqFMnSpLIPYr+zqN9xB4uSVUo16FjtRYpgoSLFtlpgYWWbl96GS2lg4DNAbYrM6gbyimZrRzgV7ujKTMpcvHY9B3ymL9J75YPOzoHfCuUX+UHgCAMgsgTNLqUSyquwWVYVetGFEAdLbSB6dcGJ+gHKK/pgca6QsxcEht0QiUHrF0wump6Xl4+Sg/jDYwyl1fH8JMD70VQRSxU7W2m6yiKHU1c+V+cgNmsHVX2se4QNltcGd6RaqmxhVwSB48YCvKJ5jbp6ac= core
+        ssh_authorized_keys_local:
+          - keys/core.pub
       - name: etcd-user
-        ssh_authorized_keys:
-          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiiIFUbCLhwdlcmujInBbolBbnI7Jw46isXHUQANQkkRwUlcRUBboDapadmaaEMNAn2GyduIgOZutSzXcqhTOd9GlHa+ZRn/lEkTIcVGoMOhdws4lblVVC8uO45DVvObiUULGyNp8SoBkkhN+c8OmDBVIoUVmBqcSjE9OOHfCFyu7h19udl7ycVb/+JX5lp1/fQ9UTvrka1TiA/aRzWdWKrYaFNj+DWYk9Ng0HOEsqQH4+uSnogXae69YXmRH0KTg6feLu1LJBRFgumfYCpbi6f9/HVC9TVAIOUoalad6ID/D2fUWivCVgVI3jzQSpDVLnuVswehzkX8ekk2b8EmbG0tjq5P3gd03XFE+31qGGpwbTuasFmGsNGolcH4A6aL2HRerchfY2y1D+Jyk8rZkkzvV+fBwR1kaSgAsiXpZePFk2w0rMjk8BZZ2JqzlW6pXBgVaznlyzZeBVnqUe/vWbN5NbfTe62NQim1gnKzRgQMX38VQove2mGqLALjre+cE= etcd-user
+        ssh_authorized_keys_local:
+          - keys/etcd-user.pub
 systemd:
     units:
       - name: selinux-permissive.service
