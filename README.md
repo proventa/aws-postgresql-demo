@@ -72,7 +72,7 @@ The infrastructure is provisioned with Ansible.
 
 ### Provisioning the infrastructure
 
-The provisioning part creates the following resources:
+The following resources will be provisioned on AWS:
 - VPC
 - Subnets
 - Internet Gateway
@@ -124,22 +124,46 @@ The output should look like this:
 +------------------+---------+---------------------------+---------------------------+---------------------------+------------------+------------+
 ```
 
-Then we will take the addresses in the `CLIENT ADDRS` column and test the cluster with the following command:
+Then we will take the addresses in the `CLIENT ADDRS` column and save it into a variable called `ENDPOINTS`. We can do that by running the following command:
 
 ```
-podman exec -it etcd-container etcdctl --write-out=table --cacert="/etc/certs/etcd-root-ca.pem" --insecure-skip-tls-verify --endpoints=https://1.x.xx.xx:2379,https://2.x.xx.xx:2379,https://3.x.xx.xx:2379 endpoint status
+ENDPOINTS=$(podman exec etcd-container etcdctl member list | awk -F ', ' '{print $5}' | tr '\n' ',' | sed 's/.$//')
+```
+
+Then we can check the status of the etcd cluster by running the following command:
+```
+podman exec -it etcd-container etcdctl --write-out=table --cacert="/etc/certs/etcd-root-ca.pem" --insecure-skip-tls-verify --endpoints=$ENDPOINTS endpoint status
 ```
 
 The output should look like this:
 
 ```
-+---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+
-|         ENDPOINT          |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX |
-+---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+
-| https://1.x.xx.xx:2379    |  1f0b3b2b3b3b3b3 |  3.5.9  |   20 kB |      true |      false |         2 |         10 |                 10 |
-| https://2.x.xx.xx:2379    |  2f0b3b2b3b3b3b3 |  3.5.9  |   20 kB |     false |      false |         2 |         10 |                 10 |
-| https://3.x.xx.xx:2379    |  3f0b3b2b3b3b3b3 |  3.5.9  |   20 kB |     false |      false |         2 |         10 |                 10 |
-+---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+
++---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------+
+|         ENDPOINT          |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX | ERROR |
++---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------+
+| https://1.x.xx.xx:2379    |  1f0b3b2b3b3b3b3 |  3.5.9  |   20 kB |      true |      false |         2 |         10 |                 10 |       |
+| https://2.x.xx.xx:2379    |  2f0b3b2b3b3b3b3 |  3.5.9  |   20 kB |     false |      false |         2 |         10 |                 10 |       |
+| https://3.x.xx.xx:2379    |  3f0b3b2b3b3b3b3 |  3.5.9  |   20 kB |     false |      false |         2 |         10 |                 10 |       |
++---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------+
 ```
+
+We can also check the health of the etcd cluster by running the following command:
+
+```
+podman exec -it etcd-container etcdctl --write-out=table --cacert="/etc/certs/etcd-root-ca.pem" --insecure-skip-tls-verify --endpoints=$ENDPOINTS endpoint health
+```
+
+The output should look like this:
+
+```
++---------------------------+--------+------+-------+
+|         ENDPOINT          | HEALTH | TOOK | ERROR |
++---------------------------+--------+------+-------+
+| https://1.x.xx.xx:2379    |   true |  2ms |       |
+| https://2.x.xx.xx:2379    |   true |  2ms |       |
+| https://3.x.xx.xx:2379    |   true |  2ms |       |
++---------------------------+--------+------+-------+
+```
+
 
 With that we can see that the etcd cluster is up and running.
