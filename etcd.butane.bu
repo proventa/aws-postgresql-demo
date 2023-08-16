@@ -135,7 +135,7 @@ storage:
         - path: /usr/local/etcd/etcd-discovery-cluster.txt
           mode: 0755
           contents:
-            local: etcd-discovery-cluster.txt
+            local: tmp/etcd-discovery-cluster.txt
 
         - path: /usr/local/bin/selinux-permissive.sh
           mode: 0755

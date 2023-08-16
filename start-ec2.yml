@@ -6,7 +6,18 @@
     num_of_instances: 3
     ec2_tags:
       cluster: containerized-etcd
+      env: demo
   tasks:
+    - name: Prepare all folders needed
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - tmp
+        - keys
+        - bin
+        - certs
+
     - name: Ensure that VPC exists
       amazon.aws.ec2_vpc_net:
         name: postgres_demo_vpc
@@ -71,6 +82,9 @@
           env: demo
       register: sg
 
+    - name: Prepare TLS Certs for HTTPS etcd comms and keys for the etcd cluster
+      ansible.builtin.shell: ./gen-root-ca.sh && ./gen-ec2-certs.sh
+
     - name: create key pair using key_material obtained using 'file' lookup plugin
       amazon.aws.ec2_key:
         name: etcd
@@ -79,17 +93,15 @@
           env: demo
       register: key_pair
 
-    - name: Prepare TLS Certs for HTTPS etcd
-      ansible.builtin.shell: ./gen-root-ca.sh
-
     - name: Create a new etcd discovery service cluster
-      ansible.builtin.shell: curl https://discovery.etcd.io/new?size={{ num_of_instances }} > etcd-discovery-cluster.txt
+      ansible.builtin.shell: curl https://discovery.etcd.io/new?size={{ num_of_instances }} > tmp/etcd-discovery-cluster.txt
 
     - name: Prepare ignition file # Converting Butane to Ignition
-      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.bu > etcd.ign
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.bu > tmp/etcd.ign
 
     - name: Start Fedora CoreOS instances
       amazon.aws.ec2_instance:
+        state: running
         instance_type: t2.micro
         image_id: ami-01616b3a6ec881521 # Fedora CoreOS
         count: "{{ num_of_instances }}"
@@ -98,10 +110,9 @@
           assign_public_ip: true
         security_group: "{{ sg.group_name }}"
         vpc_subnet_id: "{{ etcd_subnet.subnet.id }}"
-        state: running
         key_name: "{{ key_pair.key.name }}"
         tags: "{{ ec2_tags }}"
-        user_data: '{{ lookup("file", "etcd.ign")|string }}'
+        user_data: "{{ lookup('file', 'tmp/etcd.ign')|string }}"
       register: ec2_instance
 
     - name: Ensure the group "{{ ec2_tags.cluster }}" exists in the inventory file

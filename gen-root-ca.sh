@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # If etcd-root-ca.pem and etcd-root-ca-key.pem already exist, then skip this step
 if [ -f certs/etcd-root-ca.pem ] && [ -f certs/etcd-root-ca-key.pem ]; then
   echo "Root CA already exists. Skipping root CA generation."
