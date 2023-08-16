@@ -3,10 +3,140 @@ version: 1.5.0
 passwd:
     users:
       - name: core
-        ssh_authorized_keys:
-          - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCiGUz4OVm53+SzmnHTc4cg3EbzqRhBGJgJIkNyG44p+Jf5HnMw8fTD1rDx13hkq5A3075y2NQu83yz/MFSmxXiZ3qvBJfYVS3rGx+xOPk7Hh21i5mYo25UBbvzveOHFGvR7A7BMH+GcvwCIfBJ9ou3uS4kmxJbyb+aqtU80POeBTtHlV+S7i9VpLrIJ8upFUAfYvHcy7Laz/B4EgNxRtpQkIRv+ISYBiyXs5EtRTQCEMLEYhSUapcT8xJgHKaOun3c6xQe5bqklLHnrkBe23yK/GSgv8Ql1/xkbdQQtZ67ua/sSyYgGYDQwPrd0Xvm0TNA5pwqbXOApITsY2l87P6eV1o+9TVXnF2vqnHN4fn4Gw6+WKPBYWFtSfPRILPADrPyBFf4qzRXyFW+VUzZNtRwev+rcyTtoPT2IwEpZjuOie34sEuoGojPzk4pEvA8Q9ePx5rvKWv9Ip9sXaF6mktGwR3Z76gaBxHf92EzGy3eKV79OyiOfokaPPXnu8PnDhU= core
+        ssh_authorized_keys_local:
+          - keys/core.pub
+      - name: etcd-user
+        ssh_authorized_keys_local:
+          - keys/etcd-user.pub
+systemd:
+    units:
+      - name: selinux-permissive.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Turn SELinux Permissive
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/selinux-permissive.sh
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: setup-network-environment.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Setup Network Environment
+          Documentation=https://github.com/kelseyhightower/setup-network-environment
+
+          Requires=network-online.target
+          After=network-online.target
+
+          [Service]
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStartPre=curl -o /opt/bin/setup-network-environment -LJO https://github.com/kelseyhightower/setup-network-environment/releases/download/v1.0.0/setup-network-environment
+
+          ExecStartPre=/usr/bin/chmod +x /opt/bin/setup-network-environment
+          ExecStart=/opt/bin/setup-network-environment
+          ExecStartPost=/usr/local/bin/append-discovery-addr.sh
+          RemainAfterExit=yes
+          Type=oneshot
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: enable-linger.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Enable Linger for etcd-user
+
+          After=setup-network-environment.service
+          Requires=setup-network-environment.service
+
+          After=selinux-permissive.service
+          Requires=selinux-permissive.service
+
+          [Service]
+          User=etcd-user
+          ExecStart=/usr/bin/loginctl enable-linger etcd-user
+          Type=oneshot
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: etcd.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=etcd with Podman
+          Documentation=https://github.com/coreos/etcd
+
+          After=selinux-permissive.service
+          Requires=selinux-permissive.service
+
+          Requires=setup-network-environment.service
+          After=setup-network-environment.service
+
+          Requires=enable-linger.service
+          After=enable-linger.service
+
+          [Service]
+          User=etcd-user
+          EnvironmentFile=/etc/network-environment
+          Restart=always
+          RestartSec=5s
+          TimeoutStartSec=0
+          LimitNOFILE=40000
+
+          ExecStartPre=/usr/bin/mkdir -p ${HOME}/etcd-data
+          ExecStartPre=/usr/bin/podman rm -f etcd-container
+          ExecStart=/usr/bin/podman \
+            run \
+            --rm \
+            --net=host \
+            --name etcd-container \
+            --volume=${HOME}/etcd-data:/etcd-data \
+            --volume=/etc/certs:/etc/certs \
+            --volume=/etc/ssl/certs:/etc/ssl/certs \
+            gcr.io/etcd-development/etcd:v3.5.9 \
+            /usr/local/bin/etcd \
+            --name etcd-${DEFAULT_IPV4} \
+            --data-dir /etcd-data \
+            --listen-client-urls https://${DEFAULT_IPV4}:2379,http://127.0.0.1:2379 \
+            --advertise-client-urls https://${DEFAULT_IPV4}:2379 \
+            --listen-peer-urls https://${DEFAULT_IPV4}:2380 \
+            --initial-advertise-peer-urls https://${DEFAULT_IPV4}:2380 \
+            --client-cert-auth \
+            --auto-tls \
+            --trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+            --peer-client-cert-auth \
+            --peer-auto-tls \
+            --peer-trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+            --discovery=${ETCD_DISCOVERY_ADDR}
+
+          ExecStop=/usr/bin/podman rm -f etcd-container
+
+          [Install]
+          WantedBy=multi-user.target
 storage:
     files:
+        - path: /etc/certs/etcd-root-ca.pem
+          mode: 0755
+          contents:
+            local: certs/etcd-root-ca.pem
+
+        - path: /etc/certs/etcd-root-ca-key.pem
+          mode: 0755
+          contents:
+            local: certs/etcd-root-ca-key.pem
+
+        - path: /usr/local/etcd/etcd-discovery-cluster.txt
+          mode: 0755
+          contents:
+            local: tmp/etcd-discovery-cluster.txt
+
         - path: /usr/local/bin/selinux-permissive.sh
           mode: 0755
           contents:
@@ -14,87 +144,26 @@ storage:
               #!/bin/bash
               setenforce 0
               sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+              exit 0
 
-        - path: /usr/local/bin/start-etcd.sh
+        - path: /usr/local/bin/append-discovery-addr.sh
           mode: 0755
           contents:
             inline: |
               #!/bin/bash
+              MAX_RETRIES=10
+              RETRIES=0
+              while [ ! -f /usr/local/etcd/etcd-discovery-cluster.txt ]; do
+                sleep 1
+                RETRIES=$((RETRIES+1))
+                if [ $RETRIES -eq $MAX_RETRIES ]; then
+                  echo "Failed to find discovery file after $MAX_RETRIES retries"
+                  exit 1
+                fi
+              done
 
-              private_ipv4=$(hostname -I | awk '{print $1}')
-              UUID=$(uuidgen)
+              ETCD_DISCOVERY_ADDR=$(cat /usr/local/etcd/etcd-discovery-cluster.txt)
 
-              mkdir -p /tmp/etcd/data
-
-              # to write service file for etcd with Docker
-              cat > /tmp/etcd.service <<EOF
-              [Unit]
-              Description=etcd with Docker
-              Documentation=https://github.com/coreos/etcd
-
-              [Service]
-              Restart=always
-              RestartSec=5s
-              TimeoutStartSec=0
-              LimitNOFILE=40000
-
-              ExecStart=/usr/bin/docker \
-                run \
-                --rm \
-                --net=host \
-                --name etcd-v3.3.8 \
-                --volume=/tmp/etcd/data:/etcd-data \
-                --volume=/etc/ssl/certs:/etc/ssl/certs:ro \
-                gcr.io/etcd-development/etcd:v3.3.8 \
-                /usr/local/bin/etcd \
-                --name etcd-$private_ipv4 \
-                --data-dir /etcd-data \
-                --listen-client-urls http://$private_ipv4:2379 \
-                --advertise-client-urls http://$private_ipv4:2379 \
-                --listen-peer-urls http://$private_ipv4:2380 \
-                --initial-advertise-peer-urls http://$private_ipv4:2380 \
-                --initial-cluster-token tkn \
-                --initial-cluster-state new \
-                --discovery=http://discovery.etcd.io/$UUID
-
-              ExecStop=/usr/bin/docker stop etcd-v3.3.8
-
-              [Install]
-              WantedBy=multi-user.target
+              tee -a /etc/network-environment <<EOF
+              ETCD_DISCOVERY_ADDR=${ETCD_DISCOVERY_ADDR}
               EOF
-
-              mv /tmp/etcd.service /etc/systemd/system/etcd.service
-
-              systemctl daemon-reload
-
-              systemctl enable etcd.service
-
-              systemctl start etcd.service
-
-        - path: /etc/systemd/system/selinux-permissive.service
-          mode: 0644
-          contents:
-            inline: |
-              [Unit]
-              Description=Turn SELinux Permissive
-
-              [Service]
-              Type=oneshot
-              ExecStart=/usr/local/bin/selinux-permissive.sh
-
-              [Install]
-              WantedBy=multi-user.target
-
-        - path: /etc/systemd/system/start-etcd.service
-          mode: 0644
-          contents:
-            inline: |
-              [Unit]
-              Description=Start etcd with Docker
-
-              [Service]
-              Type=oneshot
-              ExecStart=/usr/local/bin/start-etcd.sh
-
-              [Install]
-              WantedBy=multi-user.target
