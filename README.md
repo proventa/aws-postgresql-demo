@@ -1,8 +1,9 @@
 # AWS PostgreSQL Demo
+
+This repository hosts the concept of running a containerized and highly available PostgreSQL cluster with disaster recovery and monitoring on Fedora CoreOS. The CoreOS instances are provisioned with Ansible on AWS. The PostgreSQL cluster is managed by Patroni. The monitoring is done with Prometheus and Grafana.
 ## Table of Contents
 
-- [About](#about)
-  - [Components used in this demo](#components-used-in-this-demo)
+- [Components used in this demo](#components-used-in-this-demo)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installing](#installing)
@@ -11,11 +12,7 @@
 - [Testing](#testing)
   - [Testing the etcd cluster](#testing-the-etcd-cluster)
 
-## About
-
-This repository hosts the concept of running a containerized and highly available [PostgreSQL](https://www.postgresql.org/) cluster with disaster recovery and monitoring on [Fedora CoreOS](https://fedoraproject.org/coreos/). The CoreOS instances are provisioned with Ansible on AWS. The PostgreSQL cluster is managed by [Patroni](https://patroni.readthedocs.io/en/latest/). The monitoring is done with [Prometheus](https://prometheus.io/) and [Grafana](https://grafana.com/).
-
-### Components used in this demo
+## Components used in this demo
 
 * [Spilo](https://github.com/zalando/spilo)
   * [Patroni](https://github.com/zalando/patroni)
