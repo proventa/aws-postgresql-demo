@@ -1,4 +1,4 @@
-- name: Create a Fedora CoreOS instance
+- name: Terminating all EC2 instances running etcd
   hosts: localhost
   connection: local
   vars:
