@@ -27,6 +27,7 @@
     map_public: true
     tags:
       Name: etcd-subnet
+      env: demo
   register: etcd_subnet
 
 - name: Ensure that the route table for the VPC exists # So that the subnet can access and be accessed from the internet
