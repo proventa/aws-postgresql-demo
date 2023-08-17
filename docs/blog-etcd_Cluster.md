@@ -6,7 +6,7 @@ Welcome to the journey of building a high-availibity distributed key-value store
 
 ## Prerequisites
 
-If you haven't installed and configured Ansible and AWS CLI, please visit the [Provisioning AWS Resources with Ansible](AWS-Ansible-Combo.md) page. There you will find the steps to install and configure Ansible and AWS CLI on your local machine.
+If you haven't installed and configured Ansible and AWS CLI, please visit the [Provisioning AWS Resources with Ansible](blog-AWS_Ansible_Combo.md) page. There you will find the steps to install and configure Ansible and AWS CLI on your local machine.
 
 ## etcd on EC2 Instances
 
