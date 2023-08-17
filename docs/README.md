@@ -1,73 +1,98 @@
 # Building a High-Availibity etcd Cluster on AWS
 
-Welcome to the journey of building a high-availibity distributed key-value store. In this project we will use [etcd](https://etcd.io), which is a distributed key-value store that provides a reliable way to store data across multiple machines. It’s open-source and available on GitHub. etcd gracefully handles leader elections during network partitions and will tolerate machine failure, including the leader.
+![etcd Architecture](etcd-architecture.svg)
+
+Welcome to the journey of building a high-availibity distributed key-value store. In this project we will build an etcd cluster inside Podman containers on AWS EC2 Instances. etcd is an open source, distributed key-value store designed for securely managing configuration data in distributed systems. Using <b>Raft</b> consensus protocol, it ensures consistent data across multiple machines. etcd is one of the most essential components for configuring management, and leader election in building reliable and highly available applications.
 
 ## Prerequisites
 
-I am currently using Ubuntu WSL on Windows 10. So, before we start, let's make sure we have the following tools installed:
+If you haven't installed and configured Ansible and AWS CLI, please visit the [Provisioning AWS Resources with Ansible](AWS-Ansible-Combo.md) page. There you will find the steps to install and configure Ansible and AWS CLI on your local machine.
 
-<b>1. AWS CLI</b> is a unified tool to manage your AWS services on the command line. With just one tool to download and configure, you can control multiple AWS services from the command line and automate them through scripts. [Install AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html)
+## etcd on EC2 Instances
 
-Before we install the AWS CLI, we need to be able to extract or unzip the downloaded file. So, we need to install the unzip package. To install the unzip package, run the following command:
+As the base image we will use <b>Fedora CoreOS</b>. Fedora CoreOS is an automatically updating, minimal, container-focused operating system. A big plus from Fedora CoreOS is that it comes with <b>Docker</b> and <b>Podman</b> installed. So, it is perfect for running containerized applications such as our etcd service which we will run inside a container. In Fedora CoreOS there is a file called <b>Ignition</b> file, which can be attached as the <i>user data</i> specification of our EC2 instances. This file is used to configure the instance during the boot process. However, the file is structured a little bit complex. Therefore, Fedora recommends to use <b>Butane</b> to generate the Ignition file. Butane is a more human-readable version Fedora CoreOS' Ignition file. The structure of the file is the same as a YAML file. So, it is easier to read and understand. Let's take a better look of how the Butane file is structured any what kind of configuration we can do with it.
 
-```bash
-sudo apt install unzip
+```yaml
+variant: fcos
+version: 1.5.0
+passwd:
+  users:
+    - name: etcd-user
+      ssh_authorized_keys_local:
+      - /path/to/public_key.pub
 ```
 
-After that, we can download and install the AWS CLI. To download the AWS CLI, run the following command:
+We can create one or more users under ```passwd``` and ```users```. In this case, we have created a user called etcd-user. We can also specify the public key of the user. The public key will be used to connect to the instance via SSH. The user is not associated with any other groups. So, it is a normal (or should I say rootless) user.
 
-```bash
-curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-unzip awscliv2.zip
-sudo ./aws/install
-```
-And then, we can verify the installation by running the following command:
-
-```bash
-aws --version
-```
-
-<b>2. Ansible</b> is an open-source automation tool that empowers you to manage, configure and deploy your systems. It runs on many Unix-like system. [Install Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
-
-
-We can install Ansible on Ubuntu by running the following command:
-
-```bash
-sudo apt install ansible
+```yaml
+storage:
+  files:
+    - path: /etc/certs/etcd-root-ca.crt
+      mode: 0644
+      local:
+        path: /path/to/etcd-root-ca.crt
+    - path: /etc/certs/etcd-root-ca-key.crt
+      mode: 0644
+      local:
+        path: /path/to/etcd-root-ca-key.crt
 ```
 
-Ansible is using Python3 to run its tasks. So, keep in mind that Python3 will be installed as well.
+We can also specify the files that we want to copy to the instance. In this case, we are copying the etcd root CA certificate and key to the instance. The files will be copied to the specified path inside the instance. We can also specify the file permissions using the ```mode``` attribute. The ```0644``` here means that the owner can read and write the file, while the group and others can only read the file.
 
-We can verify the installation by running the following command:
+```yaml
+systemd:
+  units:
+    - name: etcd.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description=etcd
+        After=enable-linger.service setup-network-environment.service selinux-permissive.service
+        Requires=enable-linger.service setup-network-environment.service selinux-permissive.service
 
-```bash
-ansible --version
+        [Service]
+        User=etcd-user
+        EnvironmentFile=/etc/network-environment
+        Restart=always
+        RestartSec=5s
+        TimeoutStartSec=0
+        LimitNOFILE=40000
+
+        ExecStartPre=/usr/bin/mkdir -p ${HOME}/etcd-data
+        ExecStartPre=/usr/bin/podman rm -f etcd-container
+        ExecStart=/usr/bin/podman \
+          run \
+          --rm \
+          --net=host \
+          --name etcd-container \
+          --volume=${HOME}/etcd-data:/etcd-data \
+          --volume=/etc/certs:/etc/certs \
+          --volume=/etc/ssl/certs:/etc/ssl/certs \
+          gcr.io/etcd-development/etcd:v3.5.9 \
+          /usr/local/bin/etcd \
+          --name etcd-${DEFAULT_IPV4} \
+          --data-dir /etcd-data \
+          --listen-client-urls https://${DEFAULT_IPV4}:2379,http://127.0.0.1:2379 \
+          --advertise-client-urls https://${DEFAULT_IPV4}:2379 \
+          --listen-peer-urls https://${DEFAULT_IPV4}:2380 \
+          --initial-advertise-peer-urls https://${DEFAULT_IPV4}:2380 \
+          --client-cert-auth \
+          --auto-tls \
+          --trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+          --peer-client-cert-auth \
+          --peer-auto-tls \
+          --peer-trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+          --discovery=${ETCD_DISCOVERY_ADDR}
+
+        ExecStop=/usr/bin/podman rm -f etcd-container
+
+        [Install]
+        WantedBy=multi-user.target
 ```
 
-## Provisioning the infrastructure
+The last part of the Butane file is the ```systemd``` section. Here we can specify the systemd units that we want to run inside the instance. In this case, we are running the etcd service. The ```name``` attribute is used to specify the name of the systemd unit. The ```enabled``` attribute is used to specify whether the unit should be enabled or not. The ```contents``` attribute is used to specify the content of the systemd unit. The content of the systemd unit is the same as the systemd unit file in the etcd repository. However, I have made some changes to the unit file. I have added some systemd units that will be run before the etcd service. We have a unit called <b>selinux-permissive.service</b> that runs a shell script for turning SELinux into permissive mode. The second unit is called <b>setup-network-environment.service</b>. It runs a script for setting up the network environment. The setup-network-environment.service was provided by Kelsey Hightower and the source code can be found [here](https://github.com/kelseyhightower/setup-network-environment). What it does, is, it creates a file called <b>network-environment</b> that contains the IP address of the EC2 instance that will be used for our etcd service. The third unit is called <b>enable-linger.service</b>. It runs a shell script for enabling the linger feature for the etcd-user. This is to avoid that files owned by the etcd-user are removed when the user logs out. The fourth unit is called <b>etcd.service</b> that runs the etcd service inside a podman container. Let's take a deeper look at the etcd.service.
 
-We made it! We have prepared all the tools we need to provision the infrastructure. Now, let's get started!
+Under ```[Service]``` we can see that ```User``` is set to etcd-user and ```EnvironmentFile``` is set to /etc/network-environment. It means that the service will be run as the etcd-user and the environment variables will be read from the /etc/network-environment file. The ```ExecStartPre``` will create a directory called etcd-data inside the home directory of the etcd-user. This is the directory which will be mounted to the /etcd-data directory inside the container, where the etcd data will be stored. The ```ExecStart``` will run the etcd service inside a podman container.
 
-### Network and Security Components
-Before we can provision EC2 instances where the etcd will be running, there are several network components that we need to provision first. The network components are:
-
-<b>1. VPC</b> - A virtual network dedicated to your AWS account. It is logically isolated from other virtual networks in the AWS Cloud. [AWS VPC](https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html)
-
-<b>2. Subnet</b> - A range of IP addresses in your VPC where you can place groups of isolated resources. [AWS Subnet](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html)
-
-<b>3. Internet Gateway</b> - A gateway that you attach to your VPC to enable communication between resources in your VPC and the internet. [AWS Internet Gateway](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Internet_Gateway.html)
-
-<b>4. Route Table</b> - A set of rules, called routes, that are used to determine where network traffic is directed. [AWS Route Table](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Route_Tables.html)
-
-<b>5. Security Group</b> - A security group acts as a virtual firewall for your instance to control inbound and outbound traffic. In this case we need to open port 22 on the TCP protocol to allow SSH connection to the EC2 instances and, for the sake of simplicity, we will allow all traffic within the subnet CIDR block so that each EC2 instances can communicate with each other. [AWS Security Group](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html)
-
-<b>6. Key Pair</b> is a secure login information for your EC2 instances.This will be needed to SSH into the EC2 instances. [AWS Key Pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
-
-To get familiar on how to provision the AWS resources locally, you can play around with the AWS CLI commands. However there is a better way to do it. We can use Ansible to provision the resources! There are many modules that we can use in Ansible. In the playbook, I have decided to use the <b>ec2_vpc_net</b> module to provision the VPC, <b>ec2_vpc_subnet</b> module to provision the subnet, <b>ec2_vpc_igw</b> module to provision the internet gateway, <b>ec2_vpc_route_table</b> module to provision the route table, <b>ec2_security_group</b> module to provision the security group, and <b>ec2_key</b> module to provision the key pair. You can find other modules [here](https://docs.ansible.com/ansible/latest/collections/amazon/aws/index.html).
-
-### EC2 instances
-Ansible also has a module called [ec2_instance](https://docs.ansible.com/ansible/latest/collections/amazon/aws/ec2_instance_module.html#ansible-collections-amazon-aws-ec2-instance-module) that can be used to provision the EC2 instances. Just like the AWS CLI, you can configure the specification of the EC2 instance you want to deploy. For example, the instance type, the AMI, the security group, etc.
-
-In the playbook I have decided to use the <b>Fedora CoreOS</b> as the base image. Fedora CoreOS is an automatically updating, minimal, container-focused operating system. The reason for using this is because it is designed to be lightweight and secure. So, it is perfect for running containerized applications such as our etcd container. In Fedora CoreOS there is a file called <b>Ignition</b> file. This file is used to configure the instance during the boot process. However, the file is structured a little bit complex. Therefore, Fedora recommends to use <b>Butane</b> to generate the Ignition file. Butane is a tool for creating and modifying Fedora CoreOS Ignition configs. The structure of the file is the same as a YAML file. So, it is easier to read and understand. In the Butane file, we will configure the user, systemd unit, and some shell scripts.
-
+There are several flags used in ```ExecStart```, but I will mention some that could be interesting to know. The ```--auto-tls``` and ```--peer-auto-tls``` is used to enable TLS for the client and peer communication. The certificates will be automatically generated by etcd. The localhost address is also listed in the ```--listen-client-urls``` flag. It means that the etcd service will listen on port 2379 on the localhost. This will be useful if we are inside the EC2 instance and want to quickly check the status of the etcd service. The ```--discovery``` flag is used to specify the discovery URL. In this case, we are using the public discovery URL provided by etcd. It is an amazing feature provided by etcd to simplify the process of bootstrapping a new cluster. The etcd nodes can automatically join the cluster by using the discovery URL. Therefore we don't need to know the IP address of the other nodes in advance.
 
