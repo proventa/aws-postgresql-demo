@@ -54,11 +54,18 @@ We can verify the installation by running the following command:
 ansible --version
 ```
 
-The amazon.aws collection is already included in Ansible 2.9. So, we don't need to install it separately. We can verify that by running the following command:
+The ```amazon.aws``` collection is already included if you installed it using ```apt```. So, we don't need to install it separately. We can verify that by running the following command:
 
 ```bash
 ansible-galaxy collection list | grep amazon.aws
 ```
+
+However, if it is not yet installed, we can install it by running the following command:
+
+```bash
+ansible-galaxy collection install amazon.aws
+```
+
 
 ## Provisioning AWS Resources
 
@@ -76,7 +83,7 @@ Create a new file, let's call it provision-network.yml, and let's start by speci
   connection: local
   gather_facts: false
 ```
-In this playbook, we've named it "Provision AWS Resources," specified that we're targeting the localhost as the host, and turned off fact gathering since we won't need it for this example. We are using the localhost as the host because Ansible will use the AWS CLI we have installed and configured earlier.
+In this playbook, we've named it "Provision AWS Network Resources," specified that we're targeting the localhost as the host, and turned off fact gathering since we won't need it for this example. We are using the localhost as the host because Ansible will use the AWS CLI we have installed and configured earlier.
 
 ### Creating the VPC
 Let's begin by creating the Virtual Private Cloud (VPC):
