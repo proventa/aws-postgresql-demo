@@ -36,7 +36,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 You can check if Ansible is installed by running the following command:
 
-```
+```bash
 ansible --version
 ```
 
@@ -46,7 +46,7 @@ If you haven't installed Ansible yet, please follow the [installation guide](htt
 
 You can check if AWS CLI is installed by running the following command:
 
-```
+```bash
 aws --version
 ```
 
@@ -56,13 +56,13 @@ If you haven't installed AWS CLI yet, please follow the [installation guide](htt
 
 Clone the repository:
 
-```
+```bash
 git clone https://gitlab.proventa.io/postgresql/fcos-postgresql-demo/aws-postgresql-demo.git
 ```
 
 Change into the directory:
 
-```
+```bash
 cd aws-postgresql-demo
 ```
 
@@ -81,20 +81,20 @@ The following resources will be provisioned on AWS:
 - EC2 Instances (CoreOS)
 - Key Pair
 
-All of the above resources are tagged with the prefix `env` and the suffix `demo`.
+All of the resources that we are going to provision are tagged with the prefix `env` and the suffix `demo`.
 
-The provisioning part can be executed with the following command:
+* The provisioning part can be executed with the following command:
 
-```
-ansible-playbook -i ansible/hosts start-ec2.yml
-```
-
-* To stop running EC2 instances, run:
-```
-ansible-playbook -i ansible/hosts stop-ec2.yml
+```bash
+ansible-playbook -i ansible/hosts init-etcd-cluster.yml
 ```
 
-For more detailed specification of the provisioned resources, please see the [start-ec2.yml](start-ec2.yml) Ansible playbook.
+* To stop running EC2 instances (Or should I say the etcd cluster), run:
+```bash
+ansible-playbook -i ansible/hosts terminate-etcd-cluster.yml
+```
+
+For more detailed specification of the provisioned resources, please see the [init-etcd-cluster.yml](init-etcd-cluster.yml) Ansible playbook.
 
 ## Testing
 
@@ -102,13 +102,13 @@ For more detailed specification of the provisioned resources, please see the [st
 
 First, SSH into one of the CoreOS instances as `etcd-user`:
 
-```
+```bash
 ssh -i keys/etcd-user etcd-user@<instance-ip>
 ```
 
 Then, we need to see the etcd cluster members. You can do that by running the following command:
 
-```
+```bash
 podman exec -it etcd-container etcdctl --write-out=table member list
 ```
 
@@ -126,12 +126,12 @@ The output should look like this:
 
 Then we will take the addresses in the `CLIENT ADDRS` column and save it into a variable called `ENDPOINTS`. We can do that by running the following command:
 
-```
+```bash
 ENDPOINTS=$(podman exec etcd-container etcdctl member list | awk -F ', ' '{print $5}' | tr '\n' ',' | sed 's/.$//')
 ```
 
 Then we can check the status of the etcd cluster by running the following command:
-```
+```bash
 podman exec -it etcd-container etcdctl --write-out=table --cacert="/etc/certs/etcd-root-ca.pem" --insecure-skip-tls-verify --endpoints=$ENDPOINTS endpoint status
 ```
 
@@ -149,7 +149,7 @@ The output should look like this:
 
 We can also check the health of the etcd cluster by running the following command:
 
-```
+```bash
 podman exec -it etcd-container etcdctl --write-out=table --cacert="/etc/certs/etcd-root-ca.pem" --insecure-skip-tls-verify --endpoints=$ENDPOINTS endpoint health
 ```
 
@@ -167,3 +167,5 @@ The output should look like this:
 
 
 With that we can see that the etcd cluster is up and running.
+
+That's it! You have successfully provisioned a 3-member etcd cluster on AWS with Ansible.
