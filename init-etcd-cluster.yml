@@ -1,0 +1,56 @@
+- name: Create Fedora CoreOS and its needed resources
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    num_of_instances: 3
+    ec2_tags:
+      cluster: containerized-etcd
+      env: demo
+  tasks:
+    - name: Prepare all folders needed
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - tmp
+        - keys
+        - bin
+        - certs
+
+    - include_tasks: network_conf-task.yml
+
+    - include_tasks: keys_and_certs-task.yml
+
+    - name: Prepare ignition file # Converting Butane to Ignition
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.bu > tmp/etcd.ign
+
+    - name: Start Fedora CoreOS instances
+      amazon.aws.ec2_instance:
+        state: running
+        instance_type: t2.micro
+        image_id: ami-01616b3a6ec881521 # Fedora CoreOS
+        count: "{{ num_of_instances }}"
+        region: eu-central-1
+        network:
+          assign_public_ip: true
+        security_group: "{{ sg.group_name }}"
+        vpc_subnet_id: "{{ etcd_subnet.subnet.id }}"
+        key_name: "{{ key_pair.key.name }}"
+        tags: "{{ ec2_tags }}"
+        user_data: "{{ lookup('file', 'tmp/etcd.ign')|string }}"
+      register: ec2_instance
+
+    - name: Ensure the group "{{ ec2_tags.cluster }}" exists in the inventory file
+      ansible.builtin.lineinfile:
+        path: "ansible/hosts"
+        line: "[{{ ec2_tags.cluster }}]"
+        state: present
+      
+    - name: Add the insance ID to the group in the inventory file
+      ansible.builtin.lineinfile:
+        path: "ansible/hosts"
+        line: "{{ item.instance_id }} ansible_host={{ item.public_ip_address }}"
+        insertafter: "{{ ec2_tags.cluster }}"
+        state: present
+      with_items: "{{ ec2_instance.instances }}"
