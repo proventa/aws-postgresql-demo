@@ -5,7 +5,7 @@
   vars:
     num_of_instances: 3
     ec2_tags:
-      cluster: containerized-etcd
+      cluster: etcd
       env: demo
   tasks:
     - name: Prepare all folders needed
@@ -41,16 +41,3 @@
         user_data: "{{ lookup('file', 'tmp/etcd.ign')|string }}"
       register: ec2_instance
 
-    - name: Ensure the group "{{ ec2_tags.cluster }}" exists in the inventory file
-      ansible.builtin.lineinfile:
-        path: "ansible/hosts"
-        line: "[{{ ec2_tags.cluster }}]"
-        state: present
-      
-    - name: Add the insance ID to the group in the inventory file
-      ansible.builtin.lineinfile:
-        path: "ansible/hosts"
-        line: "{{ item.instance_id }} ansible_host={{ item.public_ip_address }}"
-        insertafter: "{{ ec2_tags.cluster }}"
-        state: present
-      with_items: "{{ ec2_instance.instances }}"
