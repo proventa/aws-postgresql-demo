@@ -253,7 +253,7 @@ PLAY RECAP
 localhost                  : ok=7    changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
 
-You can also verify that the AWS resources are created by logging into the AWS console and navigating to the VPC dashboard.
+You can also verify that the AWS resources are created by logging into the AWS console.
 
 ## Wrapping Up
 
