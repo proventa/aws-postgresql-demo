@@ -22,7 +22,7 @@ passwd:
       - /path/to/public_key.pub
 ```
 
-We can create one or more users under ```passwd``` and ```users```. In this case, we have created a user called etcd-user. We can also specify the public key of the user. The public key will be used to connect to the instance via SSH. The user is not associated with any other groups. So, it is a normal (or should I say rootless) user.
+We can create one or more users under ```passwd.users```. In this case, we have created a user called etcd-user. We can also specify the public key of the user. The public key will be used to connect to the instance via SSH. The user is not associated with any other groups. So, it is a normal (or should I say rootless) user. By default, Fedora CoreOS have provided us with a root user called core. However, we would not use the root user for running our etcd service to leverage the security of the system.
 
 ```yaml
 storage:
@@ -90,9 +90,117 @@ systemd:
         WantedBy=multi-user.target
 ```
 
-The last part of the Butane file is the ```systemd``` section. Here we can specify the systemd units that we want to run inside the instance. In this case, we are running the etcd service. The ```name``` attribute is used to specify the name of the systemd unit. The ```enabled``` attribute is used to specify whether the unit should be enabled or not. The ```contents``` attribute is used to specify the content of the systemd unit. The content of the systemd unit is the same as the systemd unit file in the etcd repository. However, I have made some changes to the unit file. I have added some systemd units that will be run before the etcd service. We have a unit called <b>selinux-permissive.service</b> that runs a shell script for turning SELinux into permissive mode. The second unit is called <b>setup-network-environment.service</b>. It runs a script for setting up the network environment. The setup-network-environment.service was provided by Kelsey Hightower and the source code can be found [here](https://github.com/kelseyhightower/setup-network-environment). What it does, is, it creates a file called <b>network-environment</b> that contains the IP address of the EC2 instance that will be used for our etcd service. The third unit is called <b>enable-linger.service</b>. It runs a shell script for enabling the linger feature for the etcd-user. This is to avoid that files owned by the etcd-user are removed when the user logs out. The fourth unit is called <b>etcd.service</b> that runs the etcd service inside a podman container. Let's take a deeper look at the etcd.service.
+The last part of the Butane file is the ```systemd``` section. Here we can specify the systemd units that we want to run inside the instance. In this case, we are running the etcd service. The ```name``` attribute is used to specify the name of the systemd unit. The ```enabled``` attribute is used to specify whether the unit should be enabled or not on boot. The ```contents``` attribute is used to specify the content of the systemd unit. The ```Requires``` attribute is used to specify the units that are required by the etcd service. The ```After``` attribute is used to specify the units that should be started before the etcd service. We have a unit called <b>selinux-permissive.service</b> that runs a shell script for turning SELinux into permissive mode. The second unit is called <b>setup-network-environment.service</b>. It runs a script for setting up the network environment. The setup-network-environment.service was provided by Kelsey Hightower and the source code can be found [here](https://github.com/kelseyhightower/setup-network-environment). What it does, is, it creates a file called <b>network-environment</b> that contains the IP address of the EC2 instance that will be used for our etcd service. The third unit is called <b>enable-linger.service</b>. It runs a shell script for enabling the linger feature for the etcd-user. This is to avoid that files owned by the etcd-user are removed when the user logs out. The fourth unit is called <b>etcd.service</b> that runs the etcd service inside a podman container. Let's take a deeper look at the etcd.service.
 
 Under ```[Service]``` we can see that ```User``` is set to etcd-user and ```EnvironmentFile``` is set to /etc/network-environment. It means that the service will be run as the etcd-user and the environment variables will be read from the /etc/network-environment file. The ```ExecStartPre``` will create a directory called etcd-data inside the home directory of the etcd-user. This is the directory which will be mounted to the /etcd-data directory inside the container, where the etcd data will be stored. The ```ExecStart``` will run the etcd service inside a podman container.
 
-There are several flags used in ```ExecStart```, but I will mention some that could be interesting to know. The ```--auto-tls``` and ```--peer-auto-tls``` is used to enable TLS for the client and peer communication. The certificates will be automatically generated by etcd. The localhost address is also listed in the ```--listen-client-urls``` flag. It means that the etcd service will listen on port 2379 on the localhost. This will be useful if we are inside the EC2 instance and want to quickly check the status of the etcd service. The ```--discovery``` flag is used to specify the discovery URL. In this case, we are using the public discovery URL provided by etcd. It is an amazing feature provided by etcd to simplify the process of bootstrapping a new cluster. The etcd nodes can automatically join the cluster by using the discovery URL. Therefore we don't need to know the IP address of the other nodes in advance.
+There are several flags used in ```ExecStart```, but I will mention some that could be interesting to know. The ```--auto-tls``` and ```--peer-auto-tls``` is used to enable TLS for the client and peer communication. The certificates will be automatically generated by etcd. The localhost address is also listed in the ```--listen-client-urls``` flag. It means that the etcd service will listen on port 2379 on the localhost. This will be useful if we are inside the EC2 instance and want to quickly check the status of the etcd service locally. The ```--discovery``` flag is used to specify the discovery URL. In this case, we are using the public discovery URL provided by etcd. It is an amazing feature provided by etcd to simplify the process of bootstrapping a new cluster. The etcd nodes can automatically join the cluster by using the discovery URL. Therefore we don't need to know the IP address of the other nodes in advance. The ```ExecStop``` will remove the etcd-container after the etcd service is stopped.
 
+Now that we have a better understanding of the Butane file, let's create the file. We will create a file called <b>etcd-cluster.bu</b> and put the content of the Butane file inside it. Then, we can compile the Butane file into a Ignition file (.ign) using the following command.
+
+```bash
+podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd-cluster.bu > etcd.ign
+```
+
+The Ignition file will be created in the same directory as the Butane file. Now, we can use the Ignition file as the user data specification of our EC2 instances. 
+
+You can take use the Ansible Playbook from the [previous blog post](blog-AWS_Ansible_Combo.md) to provision the EC2 instances. However, we need to make some changes to the playbook. Here is the updated playbook.
+
+```yaml
+    - name: Create EC2 instances
+      amazon.aws.ec2_instance:
+        state: running
+        instance_type: t2.micro
+        image_id: ami-01616b3a6ec881521 # Fedora CoreOS
+        count: 3
+        region: eu-central-1
+        network:
+          assign_public_ip: true
+        security_group: "{{ etcd_sg.group_name }}"
+        vpc_subnet_id: "{{ etcd_subnet.subnet.id }}"
+        key_name: "{{ key_pair.key.name }}"
+        user_data: "{{ lookup('file', 'etcd.ign') }}" # Use the Ignition file as the user data
+        tags: 
+          env: demo
+```
+
+We have added the ```user_data``` attribute and set it to the Ignition file. It will take our Ignition file and run the configuration we have specified earlier during the boot process. Now, we can run the playbook to provision the EC2 instances!
+
+```bash
+ansible-playbook -i inventory/ec2.py playbook.yml
+```
+
+Let the machine run for a while until the status of the instances are changed to <b>running</b>. Then, we can SSH into one of the instances using the following command.
+
+```bash
+ssh -i /path/to/private_key etcd-user@<public_ip>
+```
+
+Since we are logging in as a non-root user, we can't run the ```sudo``` command. So, we can verify that the etcd service is running by checking the status of the etcd-container.
+
+```bash
+podman ps
+```
+
+The output should be something like this.
+
+```bash
+CONTAINER ID  IMAGE                                              COMMAND               CREATED         STATUS             PORTS  NAMES
+b0b2e2e2e2e2  gcr.io/etcd-development/etcd:v3.5.9                /usr/local/bin/etcd   2 minutes ago   Up 2 minutes ago          etcd-container
+```
+
+Now that we have verified that the etcd service container is running, we can check the members of the cluster by running the following command.
+
+```bash
+podman exec -it etcd-container etcdctl --write-out=table member list
+```
+
+The output should look like this:
+
+```
++------------------+---------+---------------------------+---------------------------+---------------------------+------------------+------------+
+|        ID        | STATUS  |          NAME             |        PEER ADDRS         |       CLIENT ADDRS        | IS LEARNER       | RAFT TERM  |
++------------------+---------+---------------------------+---------------------------+---------------------------+------------------+------------+
+|  1f0b3b2b3b3b3b3 | started | etcd-1f0b3b2b3b3b3b       | https://1.x.xx.xx:2380    | https://1.x.xx.xx:2379    | false            |          2 |
+|  2f0b3b2b3b3b3b3 | started | etcd-2f0b3b2b3b3b3b       | https://2.x.xx.xx:2380    | https://2.x.xx.xx:2379    | false            |          2 |
+|  3f0b3b2b3b3b3b3 | started | etcd-3f0b3b2b3b3b3b       | https://3.x.xx.xx:2380    | https://3.x.xx.xx:2379    | false            |          2 |
++------------------+---------+---------------------------+---------------------------+---------------------------+------------------+------------+
+```
+
+We will take the addresses in the `CLIENT ADDRS` column and save it into a variable called `ENDPOINTS`. We can do that by running the following command:
+
+```bash
+ENDPOINTS=$(podman exec etcd-container etcdctl member list | awk -F ', ' '{print $5}' | tr '\n' ',' | sed 's/.$//')
+```
+
+Then we can check the status and the health of the etcd cluster by running the following command:
+```bash
+podman exec -it etcd-container etcdctl --write-out=table --cacert="/etc/certs/etcd-root-ca.pem" --insecure-skip-tls-verify --endpoints=$ENDPOINTS endpoint status
+podman exec -it etcd-container etcdctl --write-out=table --cacert="/etc/certs/etcd-root-ca.pem" --insecure-skip-tls-verify --endpoints=$ENDPOINTS endpoint health
+```
+
+The output should look like this:
+
+```
++---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------+
+|         ENDPOINT          |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX | ERROR |
++---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------+
+| https://1.x.xx.xx:2379    |  1f0b3b2b3b3b3b3 |  3.5.9  |   20 kB |      true |      false |         2 |         10 |                 10 |       |
+| https://2.x.xx.xx:2379    |  2f0b3b2b3b3b3b3 |  3.5.9  |   20 kB |     false |      false |         2 |         10 |                 10 |       |
+| https://3.x.xx.xx:2379    |  3f0b3b2b3b3b3b3 |  3.5.9  |   20 kB |     false |      false |         2 |         10 |                 10 |       |
++---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------+
+
++---------------------------+--------+------+-------+
+|         ENDPOINT          | HEALTH | TOOK | ERROR |
++---------------------------+--------+------+-------+
+| https://1.x.xx.xx:2379    |   true |  2ms |       |
+| https://2.x.xx.xx:2379    |   true |  2ms |       |
+| https://3.x.xx.xx:2379    |   true |  2ms |       |
++---------------------------+--------+------+-------+
+```
+
+With that we can see that the etcd cluster is up and running.
+
+## Wrapping Up
+
+Congratulations on successfully setting up a high-availability etcd cluster on AWS using Ansible, Fedora CoreOS, and Podman! You've learned how to create and configure EC2 instances with custom Ignition files, run etcd inside containers, and ensure the reliability of your distributed key-value store. Thank you for joining me in this journey of building a high-availability etcd cluster on AWS. Remember that learning and exploration are continuous processes, and the tech landscape is ever-evolving. Stay tune for more exciting projects!
