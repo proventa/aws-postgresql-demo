@@ -168,7 +168,7 @@ Next, let's add the task to create a security group:
             - proto: tcp
             ports:
                 - 2379 # etcd client port
-                - 2380 # etcd server port
+                - 2380 # etcd peer port
             cidr_ip: 10.0.0.0/16
             - proto: tcp
             ports:
@@ -179,7 +179,7 @@ Next, let's add the task to create a security group:
         state: present
     register: etcd_sg
 ```
-In this task, we are using the ec2_group module to create a security group. We are specifying the name of the security group, the description, the VPC ID, the region, the rules, and the tags. We are allowing the etcd client port (2379) and the etcd server port (2380) from the CIDR block of the VPC so that the etcd cluster can communicate with each other. We are also allowing the ssh port (22) from any IP address so that we can ssh into the EC2 instance. The output of the task is registered in the etcd_sg variable. So we can take the Security Group ID from the etcd_sg variable and use it in the next task.
+In this task, we are using the ec2_group module to create a security group. We are specifying the name of the security group, the description, the VPC ID, the region, the rules, and the tags. We are allowing the etcd client port (2379) and the etcd peer port (2380) from the CIDR block of the VPC so that the etcd cluster can communicate with each other. We are also allowing the ssh port (22) from any IP address so that we can ssh into the EC2 instance. The output of the task is registered in the etcd_sg variable. So we can take the Security Group ID from the etcd_sg variable and use it in the next task.
 
 ### Creating the EC2 Key Pair
 Now, let's add the task to create an EC2 key pair:
@@ -216,10 +216,49 @@ Finally, let's add the task to create an EC2 instance:
 ```
 In this task, we are using the ec2_instance module to create an EC2 instance. We are specifying the instance type, the image ID, the count, the region, the network, the security group, the subnet ID, the key pair name, and the tags.
 
+### Running the Playbook
+Now that we've written our playbook, we can run it using the following command:
+
+```bash
+ansible-playbook provision-network.yml
+```
+
+If everything goes well, you should see the following output:
+
+```bash
+PLAY [Provision AWS Network Resources] 
+
+TASK [Create VPC]
+changed: [localhost]
+
+TASK [Create Subnet] 
+changed: [localhost]
+
+TASK [Create Internet Gateway] 
+changed: [localhost]
+
+TASK [Create Route Table]
+changed: [localhost]
+
+TASK [Create Security Group] 
+changed: [localhost]
+
+TASK [Create key pair] 
+changed: [localhost]
+
+TASK [Create EC2 instances] 
+changed: [localhost]
+
+PLAY RECAP
+localhost                  : ok=7    changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
+```
+
+You can also verify that the AWS resources are created by logging into the AWS console and navigating to the VPC dashboard.
+
 ## Wrapping Up
 
 Congratulations! You've now learned how to provision various AWS resources using Ansible and the AWS Collection. With this playbook as a starting point, you can extend and customize it to fit your specific use case. Automation through Ansible enables you to easily replicate your infrastructure while maintaining consistency and reliability.
 
 In this blog post, we've covered the basics of provisioning AWS resources using Ansible and the AWS Collection. We discussed the prerequisites, wrote Ansible tasks to create VPCs, subnets, internet gateways, route tables, security groups, EC2 key pairs, and launched EC2 instances. By combining the power of Ansible's automation with AWS's robust infrastructure, you're now well-equipped to manage and deploy resources efficiently in the cloud.
 
-Stay tuned for the next blog post in this series, where we'll dive into how to deploy an etcd cluster on AWS using Ansible!
+Stay tuned for the next blog post in this series as we dive deeper into Ansible and the AWS Collection. If you paid close attention to one of the tasks, you might have noticed what we're going to cover next! (It's the Security Group task :P)
