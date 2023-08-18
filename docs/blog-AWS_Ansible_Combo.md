@@ -1,5 +1,7 @@
 # Provisioning AWS Resources with Ansible
 
+![aws-ansible](aws_ansible_combo.svg)
+
 In this section, we will learn how to provision AWS resources locally. We will use the [Ansible AWS Collection](https://docs.ansible.com/ansible/latest/collections/amazon/aws/index.html) to provision the AWS resources. We will create the following AWS resources:
 
 - [VPC](https://aws.amazon.com/vpc/)
