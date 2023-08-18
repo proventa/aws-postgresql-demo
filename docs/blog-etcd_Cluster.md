@@ -112,7 +112,7 @@ podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd 
 The Ignition file will be created in the same directory as the Butane file. Now, we can use the Ignition file as the user data specification of our EC2 instances. 
 
 ## Spining Up the etcd Service on EC2 Instances
-You can take use the Ansible Playbook from the [previous blog post](blog-AWS_Ansible_Combo.md) to provision the EC2 instances. However, we need to make some changes to the ```Create EC2 instances``` task. Here is the updated task.
+You can take the Ansible Playbook from the [previous blog post](blog-AWS_Ansible_Combo.md) to provision the EC2 instances. However, we need to make some changes to the ```Create EC2 instances``` task. Here is the updated task.
 
 ```yaml
     - name: Create EC2 instances
