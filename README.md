@@ -3,14 +3,16 @@
 This repository hosts the concept of running a containerized and highly available PostgreSQL cluster with disaster recovery and monitoring on Fedora CoreOS. The CoreOS instances are provisioned with Ansible on AWS. The PostgreSQL cluster is managed by Patroni. The monitoring is done with Prometheus and Grafana.
 ## Table of Contents
 
-- [Components used in this demo](#components-used-in-this-demo)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installing](#installing)
-- [Usage](#usage)
-  - [Provisioning the infrastructure](#provisioning)
-- [Testing](#testing)
-  - [Testing the etcd cluster](#testing-the-etcd-cluster)
+- [AWS PostgreSQL Demo](#aws-postgresql-demo)
+  - [Table of Contents](#table-of-contents)
+  - [Components used in this demo](#components-used-in-this-demo)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installing](#installing)
+  - [Usage](#usage)
+    - [Provisioning the infrastructure](#provisioning-the-infrastructure)
+  - [Testing](#testing)
+    - [Testing the etcd cluster](#testing-the-etcd-cluster)
 
 ## Components used in this demo
 
@@ -86,12 +88,12 @@ All of the resources that we are going to provision are tagged with the prefix `
 * The provisioning part can be executed with the following command:
 
 ```bash
-ansible-playbook -i ansible/hosts init-etcd-cluster.yml
+ansible-playbook -i inventory/hosts init-etcd-cluster.yml
 ```
 
 * To stop running EC2 instances (Or should I say the etcd cluster), run:
 ```bash
-ansible-playbook -i ansible/hosts terminate-etcd-cluster.yml
+ansible-playbook -i inventory/hosts terminate-etcd-cluster.yml
 ```
 
 For more detailed specification of the provisioned resources, please see the [init-etcd-cluster.yml](init-etcd-cluster.yml) Ansible playbook.
