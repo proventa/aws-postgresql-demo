@@ -74,16 +74,16 @@ Now that we have our prerequisites in place, we can dive into the process of pro
 ### Writing Ansible Playbooks
 Ansible playbooks are at the heart of automation with Ansible. They allow you to define the desired state of your infrastructure and use Ansible's declarative language to describe what should be done. In our case, we'll create a playbook to provision the AWS resources we mentioned earlier.
 
-Create a new file, let's call it provision-network.yml, and let's start by specifying the basic structure of an Ansible playbook:
+Create a new file, let's call it provision.yml, and let's start by specifying the basic structure of an Ansible playbook:
 
 ```yaml
 ---
-- name: Provision AWS Network Resources
+- name: Provision AWS Resources
   hosts: localhost
   connection: local
   gather_facts: false
 ```
-In this playbook, we've named it "Provision AWS Network Resources," specified that we're targeting the localhost as the host, and turned off fact gathering since we won't need it for this example. We are using the localhost as the host because Ansible will use the AWS CLI we have installed and configured earlier.
+In this playbook, we've named it "Provision AWS Resources," specified that we're targeting the localhost as the host, and turned off fact gathering since we won't need it for this example. We are using the localhost as the host because Ansible will use the AWS CLI we have installed and configured earlier.
 
 ### Creating the VPC
 Let's begin by creating the Virtual Private Cloud (VPC):
@@ -220,13 +220,13 @@ In this task, we are using the ec2_instance module to create an EC2 instance. We
 Now that we've written our playbook, we can run it using the following command:
 
 ```bash
-ansible-playbook provision-network.yml
+ansible-playbook provision.yml
 ```
 
 If everything goes well, you should see the following output:
 
 ```bash
-PLAY [Provision AWS Network Resources] 
+PLAY [Provision AWS Resources] 
 
 TASK [Create VPC]
 changed: [localhost]
