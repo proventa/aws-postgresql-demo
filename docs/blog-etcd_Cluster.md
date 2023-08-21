@@ -103,10 +103,10 @@ There are several flags used in ```ExecStart```, but I will mention some that co
 
 ### Compiling the Butane File
 
-Now that we have a better understanding of the Butane file, let's create the file. We will create a file called <b>etcd-cluster.bu</b> and put the content of the Butane file inside it. Then, we can compile the Butane file into a Ignition file (.ign) using the following command.
+Now that we have a better understanding of the Butane file, let's create the file. We will create a file called <b>etcd-cluster.yaml</b> and put the content of the Butane file inside it. Then, we can compile the Butane file into a Ignition file (.ign) using the following command.
 
 ```bash
-podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd-cluster.bu > etcd.ign
+podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd-cluster.yaml > etcd.ign
 ```
 
 The Ignition file will be created in the same directory as the Butane file. Now, we can use the Ignition file as the user data specification of our EC2 instances. 

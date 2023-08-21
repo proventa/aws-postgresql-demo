@@ -26,7 +26,7 @@
     - include_tasks: keys_and_certs-task.yml
 
     - name: Prepare ignition file # Converting Butane to Ignition
-      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.bu > tmp/etcd.ign
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict etcd.butane.yaml > tmp/etcd.ign
 
     - name: Start Fedora CoreOS instances
       amazon.aws.ec2_instance:
