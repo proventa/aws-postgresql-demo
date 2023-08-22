@@ -1,0 +1,73 @@
+- name: Create Fedora CoreOS and its needed resources
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    instance_type: t2.micro
+    instance_count: 3
+    instance_region: eu-central-1
+    ami_id: ami-01616b3a6ec881521 # Fedora CoreOS
+    etcd_tags:
+      cluster: etcd
+      env: demo
+    ec2_tags:
+      cluster: patroni
+      env: demo
+  tasks:
+    - name: Prepare all folders needed
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - tmp
+        - keys
+        - bin
+        - certs
+
+    - include_tasks: network_conf-task.yml
+
+    - name: create key pair using key_material obtained using 'file' lookup plugin
+      amazon.aws.ec2_key:
+        name: core
+        key_material: "{{ lookup('file', 'keys/core.pub') }}"
+        tags:
+          env: demo
+      register: key_pair
+
+    - name: Get etcd EC2 Instances
+      amazon.aws.ec2_instance_info:
+        region: "{{ instance_region }}"
+        filters:
+          "tag:cluster": "{{ etcd_tags.cluster }}"
+          "tag:env": "{{ etcd_tags.env }}"
+          "instance-state-name": running
+      register: ec2_instances
+
+    - name: Get Private DNS of the etcd Cluster
+      set_fact:
+        private_dns: "{{ ec2_instances.instances | map(attribute='private_dns_name') | list }}"
+
+    - name: Create IP Addresses File
+      ansible.builtin.template:
+        src: ip_addresses_template.j2
+        dest: tmp/etcd-network-list
+
+    - name: Prepare ignition file # Converting Butane to Ignition
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict butane.patroni.yaml > tmp/patroni.ign
+
+    - name: Start Fedora CoreOS instances
+      amazon.aws.ec2_instance:
+        state: running
+        instance_type: "{{ instance_type }}"
+        image_id: "{{ ami_id }}"
+        count: "{{ instance_count }}"
+        region: "{{ instance_region }}"
+        network:
+          assign_public_ip: true
+        security_group: "{{ sg.group_name }}"
+        vpc_subnet_id: "{{ etcd_subnet.subnet.id }}"
+        key_name: "{{ key_pair.key.name }}"
+        tags: "{{ ec2_tags }}"
+        user_data: "{{ lookup('file', 'tmp/patroni.ign')|string }}"
+      register: ec2_instance
+
