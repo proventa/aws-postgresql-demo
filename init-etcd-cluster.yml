@@ -6,7 +6,7 @@
     instance_type: t2.micro
     instance_count: 3
     instance_region: eu-central-1
-    ami_id: ami-01616b3a6ec881521 # Fedora CoreOS
+    ami_id: ami-04d3750b706767b83 # Fedora CoreOS
     ec2_tags:
       cluster: etcd
       env: demo
