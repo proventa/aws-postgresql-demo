@@ -6,7 +6,7 @@
 
 - name: create key pair using key_material obtained using 'file' lookup plugin
   amazon.aws.ec2_key:
-    name: etcd
+    name: core
     key_material: "{{ lookup('file', 'keys/core.pub') }}"
     tags:
       env: demo

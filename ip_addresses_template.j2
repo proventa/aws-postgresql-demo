@@ -1,0 +1,1 @@
+ETCD_HOSTS="{% for ip in private_ips %}{{ ip }}:2379{% if not loop.last %},{% endif %}{% endfor %}"

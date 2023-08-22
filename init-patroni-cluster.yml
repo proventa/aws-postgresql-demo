@@ -45,7 +45,7 @@
 
     - name: Get Private DNS of the etcd Cluster
       set_fact:
-        private_dns: "{{ ec2_instances.instances | map(attribute='private_dns_name') | list }}"
+        private_ips: "{{ ec2_instances.instances | map(attribute='private_ip_address') | list }}"
 
     - name: Create IP Addresses File
       ansible.builtin.template:
