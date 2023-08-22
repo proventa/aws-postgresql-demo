@@ -6,7 +6,7 @@
       cluster: etcd
   gather_facts: false
   tasks:
-    - name: Terminate every running instance in a region with the tag {{ ec2_tags.cluster }}}
+    - name: Terminate every running instance in a region with the tag {{ ec2_tags.cluster }}
       amazon.aws.ec2_instance:
         region: eu-central-1
         state: terminated
