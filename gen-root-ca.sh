@@ -1,27 +1,16 @@
 #!/bin/bash
 
-# If etcd-root-ca.pem and etcd-root-ca-key.pem already exist, then skip this step
-if [ -f certs/etcd-root-ca.pem ] && [ -f certs/etcd-root-ca-key.pem ]; then
+# If proventa-etcd-root-ca.pem and proventa-etcd-root-ca-key.pem already exist, then skip this step
+if [ -f certs/proventa-etcd-root-ca.pem ] && [ -f certs/proventa-etcd-root-ca-key.pem ]; then
   echo "Root CA already exists. Skipping root CA generation."
   exit 0
 fi
 
-# Make sure bin and certs directories exist and clean
-mkdir -p bin && rm -f bin/cfssl* && rm -rf certs && mkdir -p certs
-
-# Download cfssl binaries
-curl -L https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o bin/cfssl
-chmod +x bin/cfssl
-
-# Download cfssljson binaries
-curl -L https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -o bin/cfssljson
-chmod +x bin/cfssljson
-
-# Make certs directory to store certificates
-mkdir -p certs
+# Make sure certs directory exist and clean
+rm -rf certs && mkdir -p certs
 
 # Generate root CA certificate bundle (Public Certificate and Private Key)
-cat > certs/etcd-root-ca-csr.json <<EOF
+cat > certs/proventa-etcd-root-ca-csr.json <<EOF
 {
   "key": {
     "algo": "rsa",
@@ -36,7 +25,16 @@ cat > certs/etcd-root-ca-csr.json <<EOF
       "C": "Germany"
     }
   ],
-  "CN": "common-name"
+  "CN": "proventa-etcd-root-ca"
 }
 EOF
-cfssl gencert --initca=true certs/etcd-root-ca-csr.json | cfssljson --bare certs/etcd-root-ca
+
+IMAGES=$(podman images | grep cfssl | awk '{print $1}')
+
+# If cfssl imagae is not present, then pull it
+if [ -z "$IMAGES" ]; then
+  echo "Pulling cfssl image"
+  podman pull cfssl/cfssl
+fi
+
+podman run --rm -v ./certs/proventa-etcd-root-ca-csr.json:/proventa-etcd-root-ca-csr.json cfssl/cfssl gencert -initca /proventa-etcd-root-ca-csr.json |  cfssljson --bare ./certs/proventa-etcd-root-ca
