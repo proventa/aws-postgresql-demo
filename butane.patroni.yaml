@@ -70,9 +70,9 @@ systemd:
             run \
             --rm \
             --net=host \
-            --volume ${HOME}/postgres:/home/postgres \
             --name patroni-container \
             --env SCOPE=batman \
+            --env ETCD3_PROTOCOL="https" \
             --env ETCD3_HOSTS="${ETCD_HOSTS}" \
             ghcr.io/zalando/spilo-15:3.0-p1
 
@@ -86,3 +86,8 @@ storage:
           mode: 0755
           contents:
             local: tmp/etcd-network-list
+
+        - path: /etc/certs/etcd-root-ca.pem
+          mode: 0755
+          contents:
+            local: certs/etcd-root-ca.pem
