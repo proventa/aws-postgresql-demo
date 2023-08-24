@@ -175,10 +175,6 @@ Since we are logging in as a non-root user, we can't run the ```sudo``` command 
 ```bash
 podman ps # Check the status of the container
 ```
-and
-```bash
-podman logs etcd-container # Check the logs of the container
-```
 
 The output should be something like this.
 
