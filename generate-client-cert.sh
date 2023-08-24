@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Make sure bin and certs directories exist and clean
-mkdir -p /tmp/bin && rm -f /tmp/bin/cfssl* && rm -rf certs && mkdir -p certs
+mkdir -p /tmp/bin && rm -f /tmp/bin/cfssl*
 
 # Download cfssl binaries
 curl -L https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o /tmp/bin/cfssl
