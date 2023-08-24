@@ -16,10 +16,14 @@ systemd:
           [Unit]
           Description=Turn SELinux Permissive
 
+          ConditionPathExists=/etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
+          ConditionFileNotEmpty=/etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
+
           [Service]
           Type=oneshot
           ExecStartPre=/usr/sbin/setenforce 0
           ExecStart=/usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+          ExecStartPost=/usr/bin/update-ca-trust
 
           [Install]
           WantedBy=multi-user.target
@@ -41,6 +45,27 @@ systemd:
           [Install]
           WantedBy=multi-user.target
 
+      - name: create-client-cert.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Create Client Cert
+
+          ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+          ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+
+          Requires=network-online.target
+          After=network-online.target
+
+          [Service]
+          ExecStart=/usr/local/bin/generate-client-cert.sh
+          
+          RemainAfterExit=yes
+          Type=oneshot
+
+          [Install]
+          WantedBy=multi-user.target
+
       - name: patroni.service
         enabled: true
         contents: |
@@ -50,11 +75,8 @@ systemd:
           ConditionPathExists=/etc/etcd-network-list
           ConditionFileNotEmpty=/etc/etcd-network-list
 
-          After=selinux-permissive.service
-          Requires=selinux-permissive.service
-
-          Requires=enable-linger.service
-          After=enable-linger.service
+          After=selinux-permissive.service enable-linger.service
+          Requires=selinux-permissive.service enable-linger.service
 
           [Service]
           User=patroni-user
@@ -64,16 +86,19 @@ systemd:
           TimeoutStartSec=0
           LimitNOFILE=40000
 
-          ExecStartPre=/usr/bin/mkdir -p ${HOME}/postgres
           ExecStartPre=/usr/bin/podman rm -f patroni-container
           ExecStart=/usr/bin/podman \
             run \
             --rm \
             --net=host \
             --name patroni-container \
+            --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
             --env SCOPE=batman \
             --env ETCD3_PROTOCOL="https" \
             --env ETCD3_HOSTS="${ETCD_HOSTS}" \
+            --env ETCD3_CACERT="/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem" \
+            --env ETCD3_CERT="/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem" \
+            --env ETCD3_KEY="/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem" \
             ghcr.io/zalando/spilo-15:3.0-p1
 
           ExecStop=/usr/bin/podman rm -f patroni-container
@@ -87,7 +112,27 @@ storage:
           contents:
             local: tmp/etcd-network-list
 
-        - path: /etc/certs/etcd-root-ca.pem
+        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca.pem
+
+        - path: /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-gencert-config.json
+
+        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca-key.pem
+
+        - path: /etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca.pem
+
+        - path: /usr/local/bin/generate-client-cert.sh
           mode: 0755
           contents:
-            local: certs/etcd-root-ca.pem
+            local: generate-client-cert.sh
