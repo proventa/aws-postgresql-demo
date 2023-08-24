@@ -81,11 +81,6 @@ systemd:
           ExecStartPre=-/usr/bin/loginctl enable-linger etcd-user
           ExecStartPre=/usr/bin/mkdir -p ${HOME}/etcd-data
           ExecStartPre=/usr/bin/chmod 700 ${HOME}/etcd-data
-          ExecStartPre=/usr/bin/mkdir -p ${HOME}/etcd-certs
-          ExecStartPre=/usr/bin/chmod 700 ${HOME}/etcd-certs
-          ExecStartPre=-/usr/bin/cp /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem ${HOME}/etcd-certs/proventa-etcd-root-ca.pem
-          ExecStartPre=-/usr/bin/cp /etc/ssl/etcd-certs/proventa-etcd-client-cert.pem ${HOME}/etcd-certs/proventa-etcd-client-cert.pem
-          ExecStartPre=-/usr/bin/cp /etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem ${HOME}/etcd-certs/proventa-etcd-client-cert-key.pem
           ExecStartPre=/usr/bin/podman rm -f etcd-container
           ExecStart=/usr/bin/podman \
             run \
@@ -93,7 +88,7 @@ systemd:
             --net=host \
             --name etcd-container \
             --volume=${HOME}/etcd-data:/etcd-data \
-            --volume=${HOME}/etcd-certs:/etcd-certs \
+            --volume=/etc/ssl/etcd-certs/:/etcd-certs \
             gcr.io/etcd-development/etcd:v3.5.9 \
             /usr/local/bin/etcd \
             --name etcd-${DEFAULT_IPV4} \
@@ -113,7 +108,6 @@ systemd:
             --discovery=${ETCD_DISCOVERY_ADDR}
           ExecStop=/usr/bin/podman rm -f etcd-container
           ExecStopPost=/usr/bin/rm -rf ${HOME}/etcd-data
-          ExecStopPost=/usr/bin/rm -rf ${HOME}/etcd-certs
 
           [Install]
           WantedBy=multi-user.target
