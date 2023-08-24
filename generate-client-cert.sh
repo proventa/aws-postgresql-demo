@@ -1,15 +1,14 @@
 #!/bin/bash
 
 # Make sure bin and certs directories exist and clean
-mkdir -p /tmp/bin && rm -f /tmp/bin/cfssl*
+mkdir -p ~/bin && rm -f ~/bin/cfssl*
 
-# Download cfssl binaries
-curl -L https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o /tmp/bin/cfssl
-chmod +x /tmp/bin/cfssl
+# Download cfssl and cfssljson binaries
+curl -L -o ~/bin/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
+curl -L -o ~/bin/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
+chmod +x ~/bin/{cfssl,cfssljson}
 
-# Download cfssljson binaries
-curl -L https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -o /tmp/bin/cfssljson
-chmod +x /tmp/bin/cfssljson
+export PATH=$PATH:~/bin
 
 ip_address=$(hostname -I | awk '{print $1}')
 
@@ -37,11 +36,11 @@ cat > /etc/ssl/etcd-certs/proventa-etcd-client-cert-csr.json <<EOF
 }
 EOF
 
-/tmp/bin/cfssl gencert \
+cfssl gencert \
   --ca /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem \
   --ca-key /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem \
   --config /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json \
-  /etc/ssl/etcd-certs/proventa-etcd-client-cert-csr.json | /tmp/bin/cfssljson --bare /etc/ssl/etcd-certs/proventa-etcd-client-cert
+  /etc/ssl/etcd-certs/proventa-etcd-client-cert-csr.json | cfssljson --bare /etc/ssl/etcd-certs/proventa-etcd-client-cert
 
 chmod 644 /etc/ssl/etcd-certs/proventa-etcd-client-cert.pem
 chmod 644 /etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem
