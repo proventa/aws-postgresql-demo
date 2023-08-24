@@ -1,8 +1,5 @@
-keys/**
-certs/**
-bin/**
-tmp/**
-etcd-discovery-cluster.txt
-ansible/hosts
-etcd.ign
+keys/
+certs/
+bin/
+tmp/
 sandbox/
