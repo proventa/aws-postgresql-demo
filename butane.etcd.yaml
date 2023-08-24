@@ -10,19 +10,6 @@ passwd:
           - keys/etcd-user.pub
 systemd:
     units:
-      - name: selinux-permissive.service
-        enabled: true
-        contents: |
-          [Unit]
-          Description=Turn SELinux Permissive
-
-          [Service]
-          Type=oneshot
-          ExecStart=/usr/local/bin/selinux-permissive.sh
-
-          [Install]
-          WantedBy=multi-user.target
-
       - name: setup-network-environment.service
         enabled: true
         contents: |
@@ -34,6 +21,9 @@ systemd:
           After=network-online.target
 
           [Service]
+          ExecStartPre=/usr/local/bin/selinux-permissive.sh
+          ExecStartPre=/usr/bin/update-ca-trust
+
           ExecStartPre=-/usr/bin/mkdir -p /opt/bin
           ExecStartPre=curl -o /opt/bin/setup-network-environment -LJO https://github.com/kelseyhightower/setup-network-environment/releases/download/v1.0.0/setup-network-environment
 
@@ -46,21 +36,22 @@ systemd:
           [Install]
           WantedBy=multi-user.target
 
-      - name: enable-linger.service
+      - name: create-client-cert.service
         enabled: true
         contents: |
           [Unit]
-          Description=Enable Linger for etcd-user
+          Description=Create Client Cert
 
-          After=setup-network-environment.service
+          ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+          ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+
           Requires=setup-network-environment.service
-
-          After=selinux-permissive.service
-          Requires=selinux-permissive.service
+          After=setup-network-environment.service
 
           [Service]
-          User=etcd-user
-          ExecStart=/usr/bin/loginctl enable-linger etcd-user
+          ExecStart=/usr/local/bin/generate-client-cert.sh
+          
+          RemainAfterExit=yes
           Type=oneshot
 
           [Install]
@@ -73,14 +64,11 @@ systemd:
           Description=etcd with Podman
           Documentation=https://github.com/coreos/etcd
 
-          After=selinux-permissive.service
-          Requires=selinux-permissive.service
+          ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+          ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
 
-          Requires=setup-network-environment.service
           After=setup-network-environment.service
-
-          Requires=enable-linger.service
-          After=enable-linger.service
+          Requires=setup-network-environment.service
 
           [Service]
           User=etcd-user
@@ -90,7 +78,14 @@ systemd:
           TimeoutStartSec=0
           LimitNOFILE=40000
 
+          ExecStartPre=-/usr/bin/loginctl enable-linger etcd-user
           ExecStartPre=/usr/bin/mkdir -p ${HOME}/etcd-data
+          ExecStartPre=/usr/bin/chmod 700 ${HOME}/etcd-data
+          ExecStartPre=/usr/bin/mkdir -p ${HOME}/etcd-certs
+          ExecStartPre=/usr/bin/chmod 700 ${HOME}/etcd-certs
+          ExecStartPre=-/usr/bin/cp /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem ${HOME}/etcd-certs/proventa-etcd-root-ca.pem
+          ExecStartPre=-/usr/bin/cp /etc/ssl/etcd-certs/proventa-etcd-client-cert.pem ${HOME}/etcd-certs/proventa-etcd-client-cert.pem
+          ExecStartPre=-/usr/bin/cp /etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem ${HOME}/etcd-certs/proventa-etcd-client-cert-key.pem
           ExecStartPre=/usr/bin/podman rm -f etcd-container
           ExecStart=/usr/bin/podman \
             run \
@@ -98,8 +93,7 @@ systemd:
             --net=host \
             --name etcd-container \
             --volume=${HOME}/etcd-data:/etcd-data \
-            --volume=/etc/certs:/etc/certs \
-            --volume=/etc/ssl/certs:/etc/ssl/certs \
+            --volume=${HOME}/etcd-certs:/etcd-certs \
             gcr.io/etcd-development/etcd:v3.5.9 \
             /usr/local/bin/etcd \
             --name etcd-${DEFAULT_IPV4} \
@@ -109,33 +103,51 @@ systemd:
             --listen-peer-urls https://${DEFAULT_IPV4}:2380 \
             --initial-advertise-peer-urls https://${DEFAULT_IPV4}:2380 \
             --client-cert-auth \
-            --auto-tls \
-            --trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+            --cert-file /etcd-certs/proventa-etcd-client-cert.pem \
+            --key-file /etcd-certs/proventa-etcd-client-cert-key.pem \
+            --trusted-ca-file /etcd-certs/proventa-etcd-root-ca.pem \
             --peer-client-cert-auth \
-            --peer-auto-tls \
-            --peer-trusted-ca-file /etc/ssl/certs/etcd-root-ca.pem \
+            --peer-cert-file /etcd-certs/proventa-etcd-client-cert.pem \
+            --peer-key-file /etcd-certs/proventa-etcd-client-cert-key.pem \
+            --peer-trusted-ca-file /etcd-certs/proventa-etcd-root-ca.pem \
             --discovery=${ETCD_DISCOVERY_ADDR}
-
           ExecStop=/usr/bin/podman rm -f etcd-container
+          ExecStopPost=/usr/bin/rm -rf ${HOME}/etcd-data
+          ExecStopPost=/usr/bin/rm -rf ${HOME}/etcd-certs
 
           [Install]
           WantedBy=multi-user.target
 storage:
     files:
-        - path: /etc/certs/etcd-root-ca.pem
-          mode: 0755
+        - path: /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+          mode: 0644
           contents:
-            local: certs/etcd-root-ca.pem
+            local: certs/proventa-etcd-gencert-config.json
 
-        - path: /etc/certs/etcd-root-ca-key.pem
-          mode: 0755
+        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem
+          mode: 0644
           contents:
-            local: certs/etcd-root-ca-key.pem
+            local: certs/proventa-etcd-root-ca-key.pem
 
-        - path: /usr/local/etcd/etcd-discovery-cluster.txt
-          mode: 0755
+        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca.pem
+
+        - path: /etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca.pem
+
+        - path: /usr/local/bin/etcd-discovery-cluster.txt
+          mode: 0644
           contents:
             local: tmp/etcd-discovery-cluster.txt
+
+        - path: /usr/local/bin/generate-client-cert.sh
+          mode: 0755
+          contents:
+            local: generate-client-cert.sh
 
         - path: /usr/local/bin/selinux-permissive.sh
           mode: 0755
@@ -153,7 +165,7 @@ storage:
               #!/bin/bash
               MAX_RETRIES=10
               RETRIES=0
-              while [ ! -f /usr/local/etcd/etcd-discovery-cluster.txt ]; do
+              while [ ! -f /usr/local/bin/etcd-discovery-cluster.txt ]; do
                 sleep 1
                 RETRIES=$((RETRIES+1))
                 if [ $RETRIES -eq $MAX_RETRIES ]; then
@@ -162,7 +174,7 @@ storage:
                 fi
               done
 
-              ETCD_DISCOVERY_ADDR=$(cat /usr/local/etcd/etcd-discovery-cluster.txt)
+              ETCD_DISCOVERY_ADDR=$(cat /usr/local/bin/etcd-discovery-cluster.txt)
 
               tee -a /etc/network-environment <<EOF
               ETCD_DISCOVERY_ADDR=${ETCD_DISCOVERY_ADDR}
