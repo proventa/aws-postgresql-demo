@@ -116,32 +116,32 @@ storage:
         - path: /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
           mode: 0644
           contents:
-            local: ../certs/proventa-etcd-gencert-config.json
+            local: certs/proventa-etcd-gencert-config.json
 
         - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem
           mode: 0644
           contents:
-            local: ../certs/proventa-etcd-root-ca-key.pem
+            local: certs/proventa-etcd-root-ca-key.pem
 
         - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
           mode: 0644
           contents:
-            local: ../certs/proventa-etcd-root-ca.pem
+            local: certs/proventa-etcd-root-ca.pem
 
         - path: /etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
           mode: 0644
           contents:
-            local: ../certs/proventa-etcd-root-ca.pem
+            local: certs/proventa-etcd-root-ca.pem
 
         - path: /usr/local/bin/etcd-discovery-cluster.txt
           mode: 0644
           contents:
-            local: ../tmp/etcd-discovery-cluster.txt
+            local: tmp/etcd-discovery-cluster.txt
 
         - path: /usr/local/bin/generate-client-cert.sh
           mode: 0755
           contents:
-            local: ../scripts/generate-client-cert.sh
+            local: scripts/generate-client-cert.sh
 
         - path: /usr/local/bin/selinux-permissive.sh
           mode: 0755

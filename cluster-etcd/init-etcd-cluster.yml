@@ -13,7 +13,7 @@
   tasks:
     - name: Prepare all folders needed
       ansible.builtin.file:
-        path: "{{ item }}"
+        path: "../{{ item }}"
         state: directory
       with_items:
         - tmp
@@ -21,12 +21,12 @@
         - bin
         - certs
 
-    - include_tasks: network_conf-task.yml
+    - include_tasks: ../network_conf-task.yml
 
-    - include_tasks: keys_and_certs-task.yml
+    - include_tasks: ../keys_and_certs-task.yml
 
     - name: Prepare ignition file # Converting Butane to Ignition
-      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict butane.etcd.yaml > tmp/etcd.ign
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-etcd/butane.etcd.yaml > ../tmp/etcd.ign
 
     - name: Start Fedora CoreOS instances
       amazon.aws.ec2_instance:
@@ -41,6 +41,6 @@
         vpc_subnet_id: "{{ etcd_subnet.subnet.id }}"
         key_name: "{{ key_pair.key.name }}"
         tags: "{{ ec2_tags }}"
-        user_data: "{{ lookup('file', 'tmp/etcd.ign')|string }}"
+        user_data: "{{ lookup('file', '../tmp/etcd.ign')|string }}"
       register: ec2_instance
 
