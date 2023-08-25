@@ -78,7 +78,7 @@ systemd:
           TimeoutStartSec=0
           LimitNOFILE=40000
 
-          ExecStartPre=-/usr/bin/loginctl enable-linger etcd-user
+          ExecStartPre=/usr/bin/loginctl enable-linger etcd-user
           ExecStartPre=/usr/bin/mkdir -p ${HOME}/etcd-data
           ExecStartPre=/usr/bin/chmod 700 ${HOME}/etcd-data
           ExecStartPre=/usr/bin/podman rm -f etcd-container
