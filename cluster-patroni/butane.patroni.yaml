@@ -86,6 +86,7 @@ systemd:
           TimeoutStartSec=0
           LimitNOFILE=40000
 
+          ExecStartPre=/usr/bin/mkdir -p ${HOME}/patroni
           ExecStartPre=/usr/bin/podman rm -f patroni-container
           ExecStart=/usr/bin/podman \
             run \
@@ -93,6 +94,7 @@ systemd:
             --net=host \
             --name patroni-container \
             --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
+            --volume ${HOME}/patroni:/home/postgres/pgdata \
             --env SCOPE=batman \
             --env ETCD3_PROTOCOL="https" \
             --env ETCD3_HOSTS="${ETCD_HOSTS}" \
