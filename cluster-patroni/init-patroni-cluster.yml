@@ -58,6 +58,26 @@
           env: demo
       register: s3_bucket
 
+    - name: Create IAM Role for Patroni WAL
+      community.aws.iam_role:
+        name: PatroniWALRole
+        state: present
+        region: "{{ instance_region }}"
+        assume_role_policy_document: "{{ lookup('file', './assume_role_policy.json')|string }}"
+        tags:
+          Name: PatroniWALRole
+          env: demo
+      register: iam_role
+
+    - name: Attach S3 Policy to Patroni WAL Role
+      amazon.aws.iam_policy:
+        policy_name: PatroniWALPolicy
+        iam_type: role
+        iam_name: "{{ iam_role.role_name }}"
+        state: present
+        region: "{{ instance_region }}"
+        policy_json : "{{ lookup('file', './patroni-wal-role-policy.json')|string }}"
+
     - name: Prepare ignition file # Converting Butane to Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-patroni/butane.patroni.yaml > ../tmp/patroni.ign
 
@@ -75,5 +95,6 @@
         key_name: "{{ key_pair.key.name }}"
         tags: "{{ ec2_tags }}"
         user_data: "{{ lookup('file', '../tmp/patroni.ign')|string }}"
+        iam_instance_profile: "{{ iam_role.role_name }}"
       register: ec2_instance
 
