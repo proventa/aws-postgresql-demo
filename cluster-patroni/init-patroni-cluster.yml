@@ -69,6 +69,9 @@
           env: demo
       register: iam_role
 
+    - name: Save the IAM Role ARN to a file
+      ansible.builtin.shell: echo AWS_ROLE_ARN={{ iam_role.arn }} > ../tmp/iam_role_arn
+    
     - name: Attach S3 Policy to Patroni WAL Role
       amazon.aws.iam_policy:
         policy_name: PatroniWALPolicy
