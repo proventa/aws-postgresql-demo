@@ -10,46 +10,11 @@ passwd:
           - keys/patroni-user.pub
 systemd:
     units:
-      - name: selinux-permissive.service
+      - name: preparation.service
         enabled: true
         contents: |
           [Unit]
-          Description=Turn SELinux Permissive
-
-          ConditionPathExists=/etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
-          ConditionFileNotEmpty=/etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
-
-          [Service]
-          Type=oneshot
-          ExecStartPre=/usr/sbin/setenforce 0
-          ExecStart=/usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
-          ExecStartPost=/usr/bin/update-ca-trust
-
-          [Install]
-          WantedBy=multi-user.target
-
-      - name: enable-linger.service
-        enabled: true
-        contents: |
-          [Unit]
-          Description=Enable Linger for patroni-user
-
-          After=selinux-permissive.service
-          Requires=selinux-permissive.service
-
-          [Service]
-          User=patroni-user
-          ExecStart=/usr/bin/loginctl enable-linger patroni-user
-          Type=oneshot
-
-          [Install]
-          WantedBy=multi-user.target
-
-      - name: create-client-cert.service
-        enabled: true
-        contents: |
-          [Unit]
-          Description=Create Client Cert
+          Description=Preparing Fedora CoreOS for Patroni. Turning SELinux to Permissive, creating client certs and updating CA Trust
 
           ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
           ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
@@ -58,7 +23,10 @@ systemd:
           After=network-online.target
 
           [Service]
+          ExecStartPre=/usr/sbin/setenforce 0
+          ExecStartPre=/usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
           ExecStart=/usr/local/bin/generate-client-cert.sh
+          ExecStartPost=/usr/bin/update-ca-trust
           
           RemainAfterExit=yes
           Type=oneshot
@@ -72,20 +40,21 @@ systemd:
           [Unit]
           Description=Patroni (Spilo) with Podman
 
-          ConditionPathExists=/etc/etcd-network-list
-          ConditionFileNotEmpty=/etc/etcd-network-list
+          ConditionPathExists=/etc/iam_role_arn
+          ConditionFileNotEmpty=/etc/iam_role_arn
 
-          After=selinux-permissive.service enable-linger.service
-          Requires=selinux-permissive.service enable-linger.service
+          After=preparation.service
+          Requires=preparation.service
 
           [Service]
           User=patroni-user
-          EnvironmentFile=/etc/etcd-network-list
+          EnvironmentFile=/etc/iam_role_arn
           Restart=always
           RestartSec=5s
           TimeoutStartSec=0
           LimitNOFILE=40000
 
+          ExecStartPre=/usr/bin/loginctl enable-linger patroni-user
           ExecStartPre=/usr/bin/mkdir -p ${HOME}/patroni
           ExecStartPre=/usr/bin/podman rm -f patroni-container
           ExecStart=/usr/bin/podman \
@@ -106,6 +75,7 @@ systemd:
             --env WAL_S3_BUCKET="patroni-demo-bucket" \
             --env USE_WALG_BACKUP="true" \
             --env USE_WALG_RESTORE="true" \
+            --env AWS_ROLE_ARN="${AWS_ROLE_ARN}" \
             ghcr.io/zalando/spilo-15:3.0-p1
 
           ExecStop=/usr/bin/podman rm -f patroni-container
@@ -143,3 +113,8 @@ storage:
           mode: 0755
           contents:
             local: scripts/generate-client-cert.sh
+
+        - path: /etc/iam_role_arn
+          mode: 0644
+          contents:
+            local: tmp/iam_role_arn
