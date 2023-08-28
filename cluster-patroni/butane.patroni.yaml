@@ -40,15 +40,15 @@ systemd:
           [Unit]
           Description=Patroni (Spilo) with Podman
 
-          ConditionPathExists=/etc/iam_role_arn
-          ConditionFileNotEmpty=/etc/iam_role_arn
+          ConditionPathExists=/etc/patroni-env
+          ConditionFileNotEmpty=/etc/patroni-env
 
           After=preparation.service
           Requires=preparation.service
 
           [Service]
           User=patroni-user
-          EnvironmentFile=/etc/iam_role_arn
+          EnvironmentFile=/etc/patroni-env
           Restart=always
           RestartSec=5s
           TimeoutStartSec=0
@@ -84,10 +84,10 @@ systemd:
           WantedBy=multi-user.target
 storage:
     files:
-        - path: /etc/etcd-network-list
+        - path: /etc/patroni-env
           mode: 0755
           contents:
-            local: tmp/etcd-network-list
+            local: tmp/patroni-env
 
         - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
           mode: 0644
@@ -113,8 +113,3 @@ storage:
           mode: 0755
           contents:
             local: scripts/generate-client-cert.sh
-
-        - path: /etc/iam_role_arn
-          mode: 0644
-          contents:
-            local: tmp/iam_role_arn

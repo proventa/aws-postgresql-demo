@@ -46,7 +46,7 @@
     - name: Create IP Addresses File
       ansible.builtin.template:
         src: ip_addresses_template.j2
-        dest: ../tmp/etcd-network-list
+        dest: ../tmp/patroni-env
 
     - name: Ensure that a S3 Bucket for WAL backups exists
       amazon.aws.s3_bucket:
@@ -70,7 +70,7 @@
       register: iam_role
 
     - name: Save the IAM Role ARN to a file
-      ansible.builtin.shell: echo AWS_ROLE_ARN={{ iam_role.arn }} > ../tmp/iam_role_arn
+      ansible.builtin.shell: echo "\nAWS_ROLE_ARN={{ iam_role.arn }}" >> ../tmp/patroni-env
     
     - name: Attach S3 Policy to Patroni WAL Role
       amazon.aws.iam_policy:
