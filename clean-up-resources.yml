@@ -81,3 +81,11 @@
         state: absent
         tags:
           env: demo
+
+    - name: Delete S3 Bucket
+      amazon.aws.s3_bucket:
+        name: patroni-demo-bucket
+        region: eu-central-1
+        state: absent
+        tags:
+          env: demo

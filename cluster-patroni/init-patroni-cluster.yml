@@ -6,7 +6,9 @@
     instance_type: t2.micro
     instance_count: 3
     instance_region: eu-central-1
+    instance_region_az: eu-central-1a
     ami_id: ami-04d3750b706767b83 # Fedora CoreOS
+    s3_bucket_name: patroni-demo-bucket
     etcd_tags:
       cluster: etcd
       env: demo
@@ -45,6 +47,16 @@
       ansible.builtin.template:
         src: ip_addresses_template.j2
         dest: ../tmp/etcd-network-list
+
+    - name: Ensure that a S3 Bucket for WAL backups exists
+      amazon.aws.s3_bucket:
+        name: "{{ s3_bucket_name }}"
+        state: present
+        region: "{{ instance_region }}"
+        tags:
+          Name: "{{ s3_bucket_name }}"
+          env: demo
+      register: s3_bucket
 
     - name: Prepare ignition file # Converting Butane to Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-patroni/butane.patroni.yaml > ../tmp/patroni.ign
