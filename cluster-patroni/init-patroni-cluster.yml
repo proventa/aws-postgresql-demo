@@ -3,7 +3,7 @@
   connection: local
   gather_facts: false
   vars:
-    instance_type: t2.micro
+    instance_type: t3.small # Machine type smaller than this is not recommended, because it would take too long to start
     instance_count: 3
     instance_region: eu-central-1
     instance_region_az: eu-central-1a
