@@ -2,6 +2,7 @@
   hosts: localhost
   connection: local
   vars:
+    region: eu-central-1
     the_tags:
       env: demo
   gather_facts: false
@@ -11,35 +12,28 @@
         filters:
           "tag:env": demo
           instance-state-name: ["running"]
-        region: eu-central-1
+        region: "{{ region }}"
       register: ec2_instances
 
     - name: Terminate every running instance in a region with tag {{ the_tags }}
       amazon.aws.ec2_instance:
-        region: eu-central-1
+        region: "{{ region }}"
         state: terminated
         filters:
           tag:env: "{{ the_tags.env }}"
       register: ec2_instance
 
-    - name: Remove the insance ID from the group "{{ the_tags.env }}" in the inventory file
-      ansible.builtin.lineinfile:
-        path: "ansible/hosts"
-        regexp: "^{{ item }}.*$"
-        state: absent
-      with_items: "{{ ec2_instance.terminate_success }}"
-
     - name: Delete Key Pair
       amazon.aws.ec2_key:
         name: "{{ ec2_instances.instances[0].key_name }}"
-        region: eu-central-1
+        region: "{{ region }}"
         state: absent
 
     - name: Delete Security Group
       amazon.aws.ec2_security_group:
         name: "Postgres Demo SG"
         vpc_id: "{{ ec2_instances.instances[0].network_interfaces[0].vpc_id }}"
-        region: eu-central-1
+        region: "{{ region }}"
         state: absent
         tags:
           env: demo
@@ -47,7 +41,7 @@
     - name: Delete Route Table
       amazon.aws.ec2_vpc_route_table:
         vpc_id: "{{ ec2_instances.instances[0].network_interfaces[0].vpc_id }}"
-        region: eu-central-1
+        region: "{{ region }}"
         state: absent
         tags:
           env: demo
@@ -57,19 +51,28 @@
           - dest: 0.0.0.0/0
           - dest: ::/0
 
-    - name: Delete Subnet
+    - name: Delete etcd cluster Subnet
       amazon.aws.ec2_vpc_subnet:
         vpc_id: "{{ ec2_instances.instances[0].network_interfaces[0].vpc_id }}"
-        region: eu-central-1
+        region: "{{ region }}"
         state: absent
         tags:
           env: demo
-        cidr: 10.0.0.0/16
+        cidr: 10.0.1.0/24
+
+    - name: Delete patroni cluster Subnet
+      amazon.aws.ec2_vpc_subnet:
+        vpc_id: "{{ ec2_instances.instances[0].network_interfaces[0].vpc_id }}"
+        region: "{{ region }}"
+        state: absent
+        tags:
+          env: demo
+        cidr: 10.0.2.0/24
     
     - name: Delete Internet Gateway
       amazon.aws.ec2_vpc_igw:
         vpc_id: "{{ ec2_instances.instances[0].network_interfaces[0].vpc_id }}"
-        region: eu-central-1
+        region: "{{ region }}"
         state: absent
         tags:
           env: demo
@@ -77,15 +80,15 @@
     - name: Delete VPC
       amazon.aws.ec2_vpc_net:
         vpc_id: "{{ ec2_instances.instances[0].network_interfaces[0].vpc_id }}"
-        region: eu-central-1
+        region: "{{ region }}"
         state: absent
         tags:
           env: demo
 
-    - name: Delete S3 Bucket
-      amazon.aws.s3_bucket:
-        name: patroni-demo-bucket
-        region: eu-central-1
+    - name: Delete IAM Role
+      community.aws.iam_role:
+        name: PatroniWALRole
+        region: "{{ region }}"
         state: absent
         tags:
           env: demo
