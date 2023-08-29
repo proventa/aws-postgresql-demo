@@ -4,7 +4,7 @@
   amazon.aws.ec2_vpc_net:
     name: postgres_demo_vpc
     cidr_block: 10.0.0.0/16
-    region: eu-central-1
+    region: "{{ instance_region }}"
     tags:
       env: demo
     state: present
@@ -14,30 +14,42 @@
   amazon.aws.ec2_vpc_igw:
     vpc_id: "{{ vpc_net.vpc.id }}"
     state: present
-    region: eu-central-1
+    region: "{{ instance_region }}"
     tags:
       env: demo
   register: igw
 
-- name: Ensure that the subnet for etcd in the VPC exists
+- name: Ensure that the subnet for the etcd cluster in the VPC exists
   amazon.aws.ec2_vpc_subnet:
     state: present
     vpc_id: "{{ vpc_net.vpc.id }}"
-    cidr: 10.0.0.0/16
+    cidr: 10.0.1.0/24
     map_public: true
     tags:
       Name: etcd-subnet
       env: demo
   register: etcd_subnet
 
+- name: Ensure that the subnet for the patroni cluster in the VPC exists
+  amazon.aws.ec2_vpc_subnet:
+    state: present
+    vpc_id: "{{ vpc_net.vpc.id }}"
+    cidr: 10.0.2.0/24
+    map_public: true
+    tags:
+      Name: patroni-subnet
+      env: demo
+  register: patroni_subnet
+
 - name: Ensure that the route table for the VPC exists # So that the subnet can access and be accessed from the internet
   amazon.aws.ec2_vpc_route_table:
     vpc_id: "{{ vpc_net.vpc.id }}"
-    region: eu-central-1
+    region: "{{ instance_region }}"
     tags:
       env: demo
     subnets:
       - "{{ etcd_subnet.subnet.id }}"
+      - "{{ patroni_subnet.subnet.id }}"
     routes:
       - dest: 0.0.0.0/0
         gateway_id: "{{ igw.gateway_id }}"
@@ -50,16 +62,24 @@
     name: "Postgres Demo SG"
     description: "Security group for Postgres Demo"
     vpc_id: "{{ vpc_net.vpc.id }}"
-    region: eu-central-1
+    region: "{{ instance_region }}"
     rules:
       - proto: tcp # SSH
         ports:
           - 22
         cidr_ip: "0.0.0.0/0"
-      - proto: all # Internal Comms between EC2 instances
-        from_port: 0
-        to_port: 65535
-        cidr_ip: "10.0.0.0/16"
+      - proto: tcp # Internal etcd communication
+        from_port: 2379
+        to_port: 2380
+        cidr_ip: "10.0.1.0/24"
+      - proto: tcp # Internal patroni communication
+        ports:
+          - 8008
+        cidr_ip: "10.0.2.0/24"
+      - proto: tcp # patroni - etcd communication
+        from_port: 2379
+        to_port: 2380
+        cidr_ip: "10.0.2.0/24"
     state: present
     tags:
       env: demo
