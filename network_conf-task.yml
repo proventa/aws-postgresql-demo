@@ -80,6 +80,10 @@
         from_port: 2379
         to_port: 2380
         cidr_ip: "10.0.2.0/24"
+      - proto: tcp # Allow PostgreSQL connections from anywhere
+        ports:
+          - 5432
+        cidr_ip: "0.0.0.0/0"
     state: present
     tags:
       env: demo
