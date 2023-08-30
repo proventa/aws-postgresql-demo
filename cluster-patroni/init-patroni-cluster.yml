@@ -106,10 +106,6 @@
         target_list: "{{ target_list | default([]) + [{'Id': item, 'Port': 5432}] }}"
       loop: "{{ ec2_instance.changed_ids }}"
 
-    - name: print target_list
-      debug:
-        var: target_list
-
     - name: Ensure Target Group for Patroni cluster exist
       community.aws.elb_target_group:
         name: patroni-tg
