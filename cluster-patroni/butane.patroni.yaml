@@ -83,7 +83,6 @@ systemd:
             --env WALG_UPLOAD_CONCURRENCY="16" \
             --env WALG_UPLOAD_DISK_CONCURRENCY="1" \
             --env WALG_PREVENT_WAL_OVERWRITE="true" \
-            --env BACKUP_SCHEDULE="* * * * *" \
             --env WALE_BACKUP_THRESHOLD_MEGABYTES="102400" \
             --env WALE_BACKUP_THRESHOLD_PERCENTAGE="30" \
             ghcr.io/zalando/spilo-15:3.0-p1
