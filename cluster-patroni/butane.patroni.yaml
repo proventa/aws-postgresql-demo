@@ -64,7 +64,7 @@ systemd:
             --name patroni-container \
             --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
             --volume ${HOME}/patroni:/home/postgres/pgdata \
-            --env SCOPE=batman \
+            --env SCOPE=superman \
             --env PGVERSION=15 \
             --env ETCD3_PROTOCOL="https" \
             --env ETCD3_HOSTS="${ETCD_HOSTS}" \
@@ -72,12 +72,21 @@ systemd:
             --env ETCD3_CERT="/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem" \
             --env ETCD3_KEY="/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem" \
             --env WAL_S3_REGION="eu-central-1" \
+            --env AWS_REGION="eu-central-1" \
             --env WAL_S3_BUCKET="patroni-demo-bucket" \
+            --env AWS_ACCESS_KEY_ID="<Your AWS Access Key>" \
+            --env AWS_SECRET_ACCESS_KEY="<Your AWS Secret Access Key>" \
             --env AWS_ROLE_ARN="${AWS_ROLE_ARN}" \
             --env USE_WALG_BACKUP="true" \
             --env USE_WALG_RESTORE="true" \
             --env WALG_COMPRESSION_METHOD="brotli" \
             --env WALG_PG_WAL_SIZE="16" \
+            --env WALG_DOWNLOAD_CONCURRENCY="10" \
+            --env WALG_UPLOAD_CONCURRENCY="16" \
+            --env WALG_UPLOAD_DISK_CONCURRENCY="1" \
+            --env WALG_PREVENT_WAL_OVERWRITE="true" \
+            --env WALE_BACKUP_THRESHOLD_MEGABYTES="102400" \
+            --env WALE_BACKUP_THRESHOLD_PERCENTAGE="30" \
             ghcr.io/zalando/spilo-15:3.0-p1
 
           ExecStop=/usr/bin/podman rm -f patroni-container

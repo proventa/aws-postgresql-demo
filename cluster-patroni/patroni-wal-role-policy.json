@@ -2,19 +2,16 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "CLI1",
+            "Sid": "ListObjectsInBucket",
             "Effect": "Allow",
-            "Action": [
-                "s3:PutObject",
-                "s3:GetObject",
-                "s3:ListBucket",
-                "s3:DeleteObject",
-                "s3:PutObjectAcl"
-            ],
-            "Resource": [
-                "arn:aws:s3:::patroni-demo-bucket/*",
-                "arn:aws:s3:::patroni-demo-bucket"
-            ]
+            "Action": ["s3:ListBucket"],
+            "Resource": ["arn:aws:s3:::patroni-demo-bucket"]
+        },
+        {
+            "Sid": "AllObjectActions",
+            "Effect": "Allow",
+            "Action": "s3:*Object",
+            "Resource": ["arn:aws:s3:::patroni-demo-bucket/*"]
         }
     ]
 }
