@@ -80,13 +80,6 @@ systemd:
             --env USE_WALG_BACKUP="true" \
             --env USE_WALG_RESTORE="true" \
             --env WALG_COMPRESSION_METHOD="brotli" \
-            --env WALG_PG_WAL_SIZE="16" \
-            --env WALG_DOWNLOAD_CONCURRENCY="10" \
-            --env WALG_UPLOAD_CONCURRENCY="16" \
-            --env WALG_UPLOAD_DISK_CONCURRENCY="1" \
-            --env WALG_PREVENT_WAL_OVERWRITE="true" \
-            --env WALE_BACKUP_THRESHOLD_MEGABYTES="102400" \
-            --env WALE_BACKUP_THRESHOLD_PERCENTAGE="30" \
             ghcr.io/zalando/spilo-15:3.0-p1
 
           ExecStop=/usr/bin/podman rm -f patroni-container
