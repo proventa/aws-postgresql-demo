@@ -104,7 +104,7 @@
     - name: Create target list
       set_fact:
         target_list: "{{ target_list | default([]) + [{'Id': item, 'Port': 5432}] }}"
-      loop: "{{ ec2_instance.changed_ids }}"
+      loop: "{{ ec2_instance.instance_ids }}"
 
     - name: Ensure Target Group for Patroni cluster exist
       community.aws.elb_target_group:
@@ -116,7 +116,7 @@
         health_check_protocol: http
         health_check_path: /
         health_check_port: 8008
-        successful_response_codes: "200,503" # 200 is for master and 503 is for replicas
+        successful_response_codes: "200" # Only forward the traffic to the master node
         target_type: instance
         targets: "{{ target_list }}"
         state: present
