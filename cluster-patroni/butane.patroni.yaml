@@ -64,7 +64,7 @@ systemd:
             --name patroni-container \
             --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
             --volume ${HOME}/patroni:/home/postgres/pgdata \
-            --env SCOPE=batman \
+            --env SCOPE=superman \
             --env PGVERSION=15 \
             --env ETCD3_PROTOCOL="https" \
             --env ETCD3_HOSTS="${ETCD_HOSTS}" \
@@ -74,6 +74,8 @@ systemd:
             --env WAL_S3_REGION="eu-central-1" \
             --env AWS_REGION="eu-central-1" \
             --env WAL_S3_BUCKET="patroni-demo-bucket" \
+            --env AWS_ACCESS_KEY_ID="<Your AWS Access Key>" \
+            --env AWS_SECRET_ACCESS_KEY="<Your AWS Secret Access Key>" \
             --env AWS_ROLE_ARN="${AWS_ROLE_ARN}" \
             --env USE_WALG_BACKUP="true" \
             --env USE_WALG_RESTORE="true" \
