@@ -16,11 +16,18 @@ So, the other option is to use the load balancer to determine the master node, t
 
 ## Why S3 bucket?
 
+In a highly available PostgreSQL cluster, it is important to have a backup of the database. The backup can be used to restore the database in case of a disaster. The backup can also be used to create new replicas, instead of streaming the data directly from the primary node. This is useful when the primary node is under heavy load and we want to create a new replica without affecting the performance of the primary node.
+
+The backup can be stored in a file system or in an S3 bucket. The advantage of using an S3 bucket is that it is highly available and durable. According to the [AWS documentation](https://aws.amazon.com/s3/storage-classes/?nc1=h_ls), the standard S3 bucket is designed to deliver 99.999999999% durability and 99.99% availability of objects over a given year. This means that the S3 bucket is highly available and durable. It is also easy to set up and configure, since Spilo provides a way to automatically create WAL-E / WAL-G backups and store them in an S3 bucket. We will be using this feature to store the backups in an S3 bucket.
 
 ## Setting up the Load Balancer
 
+
 ## Setting up the S3 Bucket
+
 
 ## Putting the S3 Bucket and Spilo Together
 
+
 ## Wrapping Up
+
