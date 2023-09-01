@@ -3,7 +3,7 @@
   connection: local
   gather_facts: false
   vars:
-    instance_type: t3.small # Machine type smaller than this is not recommended, because it would take too long to start
+    instance_type: t2.micro
     instance_count: 3
     instance_region: eu-central-1
     instance_region_az: eu-central-1a
@@ -71,6 +71,17 @@
 
     - name: Save the IAM Role ARN to a file
       ansible.builtin.shell: echo "\nAWS_ROLE_ARN={{ iam_role.arn }}" >> ../tmp/patroni-env
+
+    - name: Create instance profile for Patroni WAL
+      amazon.aws.iam_instance_profile:
+        name: PatroniWALInstanceProfile
+        state: present
+        region: "{{ instance_region }}"
+        role: "{{ iam_role.role_name }}"
+        tags:
+          Name: PatroniWALInstanceProfile
+          env: demo
+      register: iam_instance_profile
     
     - name: Attach S3 Policy to Patroni WAL Role
       amazon.aws.iam_policy:
@@ -98,7 +109,7 @@
         key_name: "{{ key_pair.key.name }}"
         tags: "{{ ec2_tags }}"
         user_data: "{{ lookup('file', '../tmp/patroni.ign')|string }}"
-        iam_instance_profile: "{{ iam_role.role_name }}"
+        iam_instance_profile: "{{ iam_instance_profile.iam_instance_profile.instance_profile_name }}"
       register: ec2_instance
 
     - name: Create target list
