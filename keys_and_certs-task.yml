@@ -12,5 +12,3 @@
       env: demo
   register: key_pair
 
-- name: Create a new etcd discovery service cluster
-  ansible.builtin.shell: curl https://discovery.etcd.io/new?size={{ instance_count }} > ../tmp/etcd-discovery-cluster.txt

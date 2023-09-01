@@ -25,6 +25,9 @@
 
     - include_tasks: ../keys_and_certs-task.yml
 
+    - name: Create a new etcd discovery service cluster
+      ansible.builtin.shell: curl https://discovery.etcd.io/new?size={{ instance_count }} > ../tmp/etcd-discovery-cluster.txt
+
     - name: Prepare ignition file # Converting Butane to Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-etcd/butane.etcd.yaml > ../tmp/etcd.ign
 
