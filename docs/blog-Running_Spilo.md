@@ -10,7 +10,7 @@ Before we start, make sure you have followed the previous blog post on [Building
 
 ## Setting up the Patroni cluster
 
-We will use the [Spilo Docker image](https://github.com/zalando/spilo) to set up our Patroni cluster. Spilo is a Docker image that combines PostgreSQL and Patroni, simplifying the deployment of fault-tolerant database setups. It is maintained by Zalando and is available on [Docker Hub](https://hub.docker.com/r/zalando/spilo/). The Spilo image is based on the official PostgreSQL image and adds Patroni and WAL-E/WAL-G to it. WAL-E and WAL-G are tools that help with continuous archiving of PostgreSQL WAL files and base backups. They are used to implement the backup and restore functionality of Spilo.
+We will use the [Spilo image](https://github.com/zalando/spilo) to set up our Patroni cluster. Spilo is a Docker image that combines PostgreSQL and Patroni, simplifying the deployment of fault-tolerant database setups. It is maintained by Zalando and is available on [Docker Hub](https://hub.docker.com/r/zalando/spilo/). The Spilo image is based on the official PostgreSQL image and adds Patroni and WAL-E/WAL-G to it. WAL-E and WAL-G are tools that help with continuous archiving of PostgreSQL WAL files and base backups. They are used to implement the backup and restore functionality of Spilo.
 
 Since we are using Fedora CoreOS, we will create a Butane file to configure the Patroni cluster. The Butane file will contain the configuration for the Spilo image, including the configuration for the etcd cluster. The Butane file will be used to create an Ignition config, which will be used to provision the Patroni cluster.
 
