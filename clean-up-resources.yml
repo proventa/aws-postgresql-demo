@@ -28,6 +28,7 @@
         name: "{{ ec2_instances.instances[0].key_name }}"
         region: "{{ region }}"
         state: absent
+      when: ec2_instances.instances[0].key_name is defined
 
     - name: Delete Security Group
       amazon.aws.ec2_security_group:
@@ -37,6 +38,7 @@
         state: absent
         tags:
           env: demo
+      when: ec2_instances.instances[0].network_interfaces[0].vpc_id is defined
 
     - name: Delete Route Table
       amazon.aws.ec2_vpc_route_table:
@@ -50,6 +52,7 @@
         routes:
           - dest: 0.0.0.0/0
           - dest: ::/0
+      when: ec2_instances.instances[0].network_interfaces[0].vpc_id is defined
 
     - name: Delete etcd cluster Subnet
       amazon.aws.ec2_vpc_subnet:
@@ -59,6 +62,18 @@
         tags:
           env: demo
         cidr: 10.0.1.0/24
+      when: ec2_instances.instances[0].network_interfaces[0].vpc_id is defined
+    
+    - name: Delete Network Load Balancer
+      community.aws.elb_network_lb:
+        name: patroni-nlb
+        state: absent
+
+    - name: Delete target group
+      community.aws.elb_target_group:
+        name: patroni-tg
+        region: "{{ region }}"
+        state: absent
 
     - name: Delete patroni cluster Subnet
       amazon.aws.ec2_vpc_subnet:
@@ -68,6 +83,7 @@
         tags:
           env: demo
         cidr: 10.0.2.0/24
+      when: ec2_instances.instances[0].network_interfaces[0].vpc_id is defined
     
     - name: Delete Internet Gateway
       amazon.aws.ec2_vpc_igw:
@@ -76,6 +92,7 @@
         state: absent
         tags:
           env: demo
+      when: ec2_instances.instances[0].network_interfaces[0].vpc_id is defined
 
     - name: Delete VPC
       amazon.aws.ec2_vpc_net:
@@ -84,6 +101,14 @@
         state: absent
         tags:
           env: demo
+      when: ec2_instances.instances[0].network_interfaces[0].vpc_id is defined
+
+    - name: Delete S3 bucket and its objects
+      amazon.aws.s3_bucket:
+        name: patroni-demo-bucket
+        region: "{{ region }}"
+        force: true
+        state: absent
 
     - name: Delete IAM Role
       community.aws.iam_role:
