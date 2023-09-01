@@ -10,7 +10,7 @@ Before we start, make sure you have followed the previous blog post on [Building
 
 ## Setting up the Patroni cluster
 
-We will use the [Spilo image](https://github.com/zalando/spilo) to set up our Patroni cluster. Spilo is a container image that combines PostgreSQL and Patroni, simplifying the deployment of fault-tolerant database setups. The Spilo image is based on the official PostgreSQL image and adds Patroni and WAL-E/WAL-G to it. WAL-E and WAL-G are tools that help with continuous archiving of PostgreSQL WAL files and base backups. They are used to implement the backup and restore functionality of Spilo.
+We will use the [Spilo image](https://github.com/zalando/spilo) to set up our Patroni cluster. Spilo is a container image that combines PostgreSQL and Patroni, simplifying the deployment of fault-tolerant database setups. The Spilo image is based on the official PostgreSQL image and adds Patroni and WAL-E/WAL-G to it. WAL-E and WAL-G are tools that help with continuous archiving of PostgreSQL WAL files and base backups. They are used to implement the backup and restore functionality.
 
 Since we are using Fedora CoreOS, we will create a Butane file to configure the Patroni cluster. The Butane file will contain the configuration for the Spilo image, including the configuration for the etcd cluster. The Butane file will be used to create an Ignition config, which will be used to provision the Patroni cluster.
 
@@ -60,7 +60,7 @@ storage:
             local: scripts/generate-client-cert.sh
 ```
 
-Here we are attaching the following files to the OS:
+Here we are attaching the following files from the local machine to the EC2 instances:
 
 * `/etc/patroni-env`: This file contains the environment variables that will be used by the Spilo container.
 * `/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem`: This file contains the root CA certificate of the etcd cluster.
@@ -119,7 +119,7 @@ systemd:
 
 Here we are creating a systemd unit file for the Spilo container. The unit file will be used to run the Spilo container as a systemd service. The unit file contains many attributes but let's focus on the `podman` command executed in the `ExecStart` section. This command is used to run the Spilo container. The command has the following flags and arguments:
 
-`--volume ${HOME}/patroni:/home/postgres/pgdata`: This is the path to the directory that will be used to store the data of the PostgreSQL cluster. By default the data is stored in `/home/postgres/pgdata` inside the container. We will mount this directory to the ${HOME}/patroni directory on the host machine. Another use case where this can be useful is when you want to use an EBS volume to store the data of the PostgreSQL cluster so that the data is not lost when the EC2 instance is terminated.
+`--volume ${HOME}/patroni:/home/postgres/pgdata`: This is the path to the directory that will be used to store the data of the PostgreSQL cluster. By default the data is stored in `/home/postgres/pgdata` inside the container. We will mount this directory to the `${HOME}/patroni` directory on the host machine. Another use case where this can be useful is when you want to use an additional or external EBS volume to store the data of the PostgreSQL cluster. The volumes can then be configured so that the data is not lost when the EC2 instance is terminated.
 
 `--volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs`: This is the path to the directory that contains the certificates of the etcd cluster.
 
