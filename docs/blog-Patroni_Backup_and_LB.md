@@ -26,7 +26,7 @@ Now let's see how we can set up a load balancer for our PostgreSQL cluster. We w
 
 The first step is to create a new Target Group. The Target Group is a group of instances that will receive traffic from the load balancer. In our case, the Target Group will contain the instances of our PostgreSQL cluster. We will create a new Target Group called `patroni-tg` and add the instances of our PostgreSQL cluster to it. We can use the following Ansible task to create the Target Group:
 
-```
+```yaml
 - name: Create target list
     set_fact:
     target_list: "{{ target_list | default([]) + [{'Id': item, 'Port': 5432}] }}"
@@ -53,7 +53,7 @@ In the `health_check_port ` parameter, we specify the port on which the health c
 
 The next step is to create a new Load Balancer. We will create a new Load Balancer called `patroni-nlb` and add the Target Group `patroni-tg` to it. We can use the following Ansible task to create the Load Balancer:
 
-```
+```yaml
 - name: Ensure Network Load Balancer for Patroni cluster exist
 community.aws.elb_network_lb:
     name: patroni-nlb
@@ -72,13 +72,13 @@ In the `subnets` parameter, we specify the subnets in which the load balancer wi
 
 The load balancer will be assigned with a DNS name. Since, we are assigning the load balancer in a public subnet, the DNS name will be publicly accessible. We can use the DNS name to connect to the PostgreSQL cluster. To get the DNS name of the load balancer, we can navigate to the AWS console and select the load balancer or we can use the following command on your terminal:
 
-```
+```bash
 aws elbv2 describe-load-balancers --names patroni-nlb --query 'LoadBalancers[*].DNSName' --output text
 ```
 
 The output should look like this:
 
-```
+```bash
 patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com
 ```
 
@@ -98,7 +98,7 @@ Now let's see how we can set up an S3 bucket for our PostgreSQL cluster. We will
 
 The first step is to create a new S3 Bucket. We will create a new S3 Bucket called `patroni-demo-bucket`. We can use the following Ansible task to create the S3 Bucket:
 
-```
+```yaml
 - name: Ensure that a S3 Bucket for WAL backups exists
     amazon.aws.s3_bucket:
     name: "patroni-demo-bucket
@@ -112,7 +112,7 @@ The first step is to create a new S3 Bucket. We will create a new S3 Bucket call
 
 The next step is to create a new IAM Role that will be used by the EC2 instances running the Spilo image to access the S3 bucket. The IAM Role should have specific permissions to access the S3 bucket. We can use the following Ansible task to create the IAM Role and its permissions:
 
-```
+```yaml
 - name: Create IAM Role for Patroni WAL
     community.aws.iam_role:
     name: PatroniWALRole
@@ -154,7 +154,7 @@ Notice that we are using the `assume_role_policy_document` parameter to specify 
 
 Now, let's see how we can put the S3 bucket and Spilo together. We can take the systemd unit file from the [previous blog post](https://www.proventa.io/blog/Patroni-PostgreSQL-High-Availability) and modify it to include the S3 bucket. The modified systemd unit file should look like this:
 
-```
+```yaml
 ... # Omitted for brevity
 ExecStart=/usr/bin/podman \
     run \
@@ -184,13 +184,13 @@ We are specifying the AWS_REGION, WAL_S3_BUCKET and AWS_ROLE_ARN environment var
 
 Now, let's check if the backups are being stored in the S3 bucket. We can do so by navigating to the AWS console and selecting the `patroni-demo-bucket` S3 bucket. We should see a new folder called `spilo` in the S3 bucket. The folder should contain a folder with the name of your Patroni cluster and inside that folder, we should see the WAL-G backups. We can also check if the backups are being stored in the S3 bucket by running the following command on your terminal:
 
-```
+```bash
 aws s3 ls s3://patroni-demo-bucket/spilo/superman --recursive --human-readable --summarize
 ```
 
 The output should look like this:
 
-```
+```bash
 2023-09-01 09:08:08  192 Bytes spilo/superman/wal/15/wal_005/000000010000000000000002.00000060.backup.lz4
 2023-09-01 09:08:07    2.9 KiB spilo/superman/wal/15/wal_005/000000010000000000000002.lz4
 ...

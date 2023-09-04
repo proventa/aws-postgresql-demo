@@ -191,7 +191,7 @@ podman exec -it etcd-container etcdctl --write-out=table member list
 
 The output should look like this:
 
-```
+```bash
 +------------------+---------+---------------------------+---------------------------+---------------------------+------------------+------------+
 |        ID        | STATUS  |          NAME             |        PEER ADDRS         |       CLIENT ADDRS        | IS LEARNER       | RAFT TERM  |
 +------------------+---------+---------------------------+---------------------------+---------------------------+------------------+------------+
@@ -215,7 +215,7 @@ podman exec -it etcd-container etcdctl --write-out=table --cacert="/etcd-certs/p
 
 The output should look like this:
 
-```
+```bash
 +---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------+
 |         ENDPOINT          |        ID        | VERSION | DB SIZE | IS LEADER | IS LEARNER | RAFT TERM | RAFT INDEX | RAFT APPLIED INDEX | ERROR |
 +---------------------------+------------------+---------+---------+-----------+------------+-----------+------------+--------------------+-------+

@@ -16,7 +16,7 @@ Since we are using Fedora CoreOS, we will create a Butane file to configure the 
 
 ### Creating a rootless user for running the Spilo container
 
-```
+```yaml
 variant: fcos
 version: 1.5.0
 passwd:
@@ -31,7 +31,7 @@ Here we are creating a user called `patroni-user`. This user will be used to run
 
 ### Attaching needed files to the machine
 
-```
+```yaml
 storage:
     files:
         - path: /etc/patroni-env
@@ -72,7 +72,7 @@ For more detailed information about the files, please visit our [Github reposito
 
 ### Creating the configuration for the Spilo container
 
-```	
+```yaml
 systemd:
     units:
       - name: patroni.service
@@ -145,13 +145,13 @@ Notice that we are using `ETCD3` instead of `ETCD`. This is because our etcd clu
 
 Now that we have configured the Butane file, we can use it to create an Ignition config. The Ignition config will be used to provision the EC2 instance that will run the Patroni cluster. To create the Ignition config, run the following command:
 
-```
+```bash
 podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-patroni/butane.patroni.yaml > ../tmp/patroni.ign
 ```
 
 Before we can provision an EC2 instance for our Patroni cluster, we need to know what are the IP addresses of the etcd cluster. To get the IP addresses of the etcd cluster, we can run the following task inside an ansible playbook:
 
-```
+```yaml
 - name: Get etcd EC2 Instances
     amazon.aws.ec2_instance_info:
     region: "{{ instance_region }}"
@@ -191,7 +191,7 @@ Another thing to prepare is the security group that will be used by the EC2 inst
 
 We can take the following ansible task to provision a security group for the Patroni cluster:
 
-```
+```yaml
 - name: Ensure that the security group exists
   amazon.aws.ec2_security_group:
     name: "Patroni Cluster SG"
@@ -220,7 +220,7 @@ We can take the following ansible task to provision a security group for the Pat
 
 Now that we have the IP addresses of the etcd cluster and the security group for the Patroni cluster, we can provision an EC2 instance for our Patroni cluster. To provision the EC2 instance, we can run the following task inside an ansible playbook:
 
-```
+```yaml
 - name: Start Fedora CoreOS instances
     amazon.aws.ec2_instance:
     state: running
@@ -244,7 +244,7 @@ For the sake of simplicity, we are setting the security group to allow connectio
 
 Now that we have provisioned the Patroni cluster, we can connect to it. To connect to the Patroni cluster, we can run the following command:
 
-```
+```bash
 ssh -i keys/patroni-user patroni-user@<EC2_INSTANCE_PUBLIC_IP>
 ```
 
@@ -252,19 +252,19 @@ If the instance is just provisioned, it might take a few minutes for the machine
 
 Once you are connected to the EC2 instance, you can run the following command to check the status of the Spilo container:
 
-```	
+```bash
 podman ps
 ```
 
 If you can find a container running with the name `patroni-container`, then the Spilo container is running. Now, we can check the status of the Patroni cluster by running the following command:
 
-```
+```bash
 podman exec -it patroni-container patronictl list
 ```
 
 The output should be similar to the following:
 
-```
+```bash
 + Cluster: superman (101010101010101010) ---+----+-----------+
 | Member | Host        | Role    | State    | TL | Lag in MB |
 +--------+-------------+---------+----------+----+-----------+
