@@ -191,8 +191,8 @@ aws s3 ls s3://patroni-demo-bucket/spilo/superman --recursive --human-readable -
 The output should look like this:
 
 ```
-2023-09-01 09:08:08  192 Bytes spilo/superman/wal/15/wal_005/000000010000000000000002.00000060.backup.br
-2023-09-01 09:08:07    2.9 KiB spilo/superman/wal/15/wal_005/000000010000000000000002.br
+2023-09-01 09:08:08  192 Bytes spilo/superman/wal/15/wal_005/000000010000000000000002.00000060.backup.lz4
+2023-09-01 09:08:07    2.9 KiB spilo/superman/wal/15/wal_005/000000010000000000000002.lz4
 ...
 ```
 
