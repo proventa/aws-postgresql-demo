@@ -123,7 +123,7 @@
         region: "{{ instance_region }}"
         vpc_id: "{{ vpc_net.vpc.id }}"
         protocol: tcp
-        port: 5432
+        port: 6432
         health_check_protocol: http
         health_check_path: /
         health_check_port: 8008
@@ -141,7 +141,7 @@
         state: present
         listeners:
           - Protocol: TCP
-            Port: 5432
+            Port: 6432
             DefaultActions:
               - Type: forward
                 TargetGroupArn: "{{ tg.target_group_arn  }}"
