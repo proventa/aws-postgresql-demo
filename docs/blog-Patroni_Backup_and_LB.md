@@ -28,12 +28,12 @@ The first step is to create a new Target Group. The Target Group is a group of i
 
 ```yaml
 - name: Create target list
-    set_fact:
+  set_fact:
     target_list: "{{ target_list | default([]) + [{'Id': item, 'Port': 5432}] }}"
     loop: "{{ ec2_instance.instance_ids }}" # The list of instance ids that will receive traffic from the load balancer
 
 - name: Ensure Target Group for Patroni cluster exist
-    community.aws.elb_target_group:
+  community.aws.elb_target_group:
     name: patroni-tg
     region: "{{ instance_region }}"
     vpc_id: "{{ vpc_net.vpc.id }}"
@@ -55,7 +55,7 @@ The next step is to create a new Load Balancer. We will create a new Load Balanc
 
 ```yaml
 - name: Ensure Network Load Balancer for Patroni cluster exist
-community.aws.elb_network_lb:
+  community.aws.elb_network_lb:
     name: patroni-nlb
     subnets:
     - "{{ patroni_subnet.subnet.id }}"
@@ -100,7 +100,7 @@ The first step is to create a new S3 Bucket. We will create a new S3 Bucket call
 
 ```yaml
 - name: Ensure that a S3 Bucket for WAL backups exists
-    amazon.aws.s3_bucket:
+  amazon.aws.s3_bucket:
     name: "patroni-demo-bucket
     state: present
     region: "{{ instance_region }}"
@@ -114,7 +114,7 @@ The next step is to create a new IAM Role that will be used by the EC2 instances
 
 ```yaml
 - name: Create IAM Role for Patroni WAL
-    community.aws.iam_role:
+  community.aws.iam_role:
     name: PatroniWALRole
     state: present
     region: "{{ instance_region }}"
@@ -128,7 +128,7 @@ The next step is to create a new IAM Role that will be used by the EC2 instances
     ansible.builtin.shell: echo "\nAWS_ROLE_ARN={{ iam_role.arn }}" >> ../tmp/patroni-env # Will be used by Spilo
 
 - name: Create instance profile for Patroni WAL
-    amazon.aws.iam_instance_profile:
+  amazon.aws.iam_instance_profile:
     name: PatroniWALInstanceProfile
     state: present
     region: "{{ instance_region }}"
@@ -139,7 +139,7 @@ The next step is to create a new IAM Role that will be used by the EC2 instances
     register: iam_instance_profile
 
 - name: Attach S3 Policy to Patroni WAL Role
-    amazon.aws.iam_policy:
+  amazon.aws.iam_policy:
     policy_name: PatroniWALPolicy
     iam_type: role
     iam_name: "{{ iam_role.role_name }}"
