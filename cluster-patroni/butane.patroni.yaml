@@ -99,7 +99,7 @@ systemd:
           TimeoutStartSec=0
           LimitNOFILE=40000
 
-          ExecStartPre=/usr/local/bin/prepare_pgbouncer_auth.sh
+          ExecStartPre=/usr/local/bin/prepare_pgbouncer_auth.sh patroni-container postgres postgres
           ExecStartPre=/usr/bin/podman rm -f pgbouncer-container
           ExecStart=/usr/bin/podman \
             run \
