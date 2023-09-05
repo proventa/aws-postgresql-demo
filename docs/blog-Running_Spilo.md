@@ -1,4 +1,4 @@
-# Setting up a highly available PostgreSQL with Patroni using Spilo Image
+# Setting up a highly available PostgreSQL Cluster with Patroni using Spilo Image
 
 ![Patroni Cluster](patroni-architecture.svg)
 
@@ -141,7 +141,7 @@ Here we are creating a systemd unit file for the Spilo container. The unit file 
 
 Notice that we are using `ETCD3` instead of `ETCD`. This is because our etcd cluster is using version 3 of the etcd API. However, if you are using an etcd cluster that is using version 2 of the etcd API, you should use `ETCD`.
 
-### Deploying the Patroni cluster on a EC2 instance
+### Deploying the Patroni cluster on an EC2 instance
 
 Now that we have configured the Butane file, we can use it to create an Ignition config. The Ignition config will be used to provision the EC2 instance that will run the Patroni cluster. To create the Ignition config, run the following command:
 
@@ -186,8 +186,8 @@ ETCD_HOSTS="1.xxx.xxx.xxx:2379,2.xxx.xxx.xxx:2379,3.xxx.xxx.xxx:2379"
 Another thing to prepare is the security group that will be used by the EC2 instance. The security group should allow the following inbound traffic:
 
 * TCP port 2379: This is the port used to communicate with the etcd cluster.
-* TCP port 5432: This is the port used to connect to the PostgreSQL.
-* TCP port 8008: This is the port used by the Patroni cluster.
+* TCP port 5432: This is the port used to connect to PostgreSQL.
+* TCP port 8008: This is the REST-API port used by the Patroni cluster.
 
 We can take the following ansible task to provision a security group for the Patroni cluster:
 
@@ -238,7 +238,7 @@ Now that we have the IP addresses of the etcd cluster and the security group for
     register: ec2_instance
 ```
 
-For the sake of simplicity, we are setting the security group to allow connections from anywhere on port 5432 so that we can connect to the PostgreSQL cluster from our local machine. Therefore, we are using a public subnet for the Patroni cluster. This is because we want to be able to connect to the PostgreSQL Database from our local machine. In a real production environment, you would use a private subnet for the Patroni cluster.
+For the sake of simplicity, we are setting the security group to allow connections from anywhere on port 5432 so that we can connect to the PostgreSQL cluster from our local machine. Therefore, we are using a public subnet for the Patroni cluster. This is because we want to be able to connect to the PostgreSQL database from our local machine. In a real production environment, you would use a private subnet for the Patroni cluster.
 
 ### Verifying the Patroni cluster
 
