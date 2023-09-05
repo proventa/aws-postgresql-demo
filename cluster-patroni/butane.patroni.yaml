@@ -106,7 +106,6 @@ systemd:
             --rm \
             --net=host \
             --name pgbouncer-container \
-            --volume /usr/local/bin/userlist.txt:/etc/pgbouncer/userlist.txt \
             --env POSTGRESQL_DATABASE="postgres" \
             --env POSTGRESQL_HOST="localhost" \
             --env POSTGRESQL_PORT="5432" \
@@ -115,7 +114,7 @@ systemd:
             --env PGBOUNCER_AUTH_TYPE="scram-sha-256" \
             --env PGBOUNCER_AUTH_QUERY="SELECT username, password FROM public.lookup($1)" \
             --env PGBOUNCER_AUTH_USER="pgbouncer" \
-            --env PGBOUNCER_USERLIST="/etc/pgbouncer/userlist.txt" \
+            --env PGBOUNCER_USERLIST='"pgbouncer" "pgbouncer"' \
             docker.io/bitnami/pgbouncer:1.20.1
 
           ExecStop=/usr/bin/podman rm -f pgbouncer-container
@@ -159,9 +158,3 @@ storage:
           mode: 0755
           contents:
             local: scripts/prepare_pgbouncer_auth.sh
-
-        - path: /usr/local/bin/userlist.txt
-          mode: 0755
-          contents:
-            inline: |
-              "pgbouncer" "pgbouncer"
