@@ -2,7 +2,7 @@
 
 ![Patroni Load Balancing and S3 Backup](patroni-loadbalancing-s3.svg)
 
-In our previous blog post, we embarked on a journey to set up a highly available PostgreSQL cluster managed by Patroni using the Spilo image. We saw how Patroni, in collaboration with an etcd cluster, elevates PostgreSQL to new heights of availability and failover automation. Building upon that, let's explore the next chapter in our journey: leveraging a network load balancer and an S3 bucket for a highly available PostgreSQL cluster.
+In our [previous blog post](./blog-Running_Spilo.md), we embarked on a journey to set up a highly available PostgreSQL cluster managed by Patroni using the Spilo image. We saw how Patroni, in collaboration with an etcd cluster, elevates PostgreSQL to new heights of availability and failover automation. Building upon that, let's explore the next chapter in our journey: leveraging a network load balancer and an S3 bucket for a highly available PostgreSQL cluster.
 
 ## Why Load Balancing?
 
@@ -152,7 +152,7 @@ Notice that we are using the `assume_role_policy_document` parameter to specify 
 
 ## Putting the S3 Bucket and Spilo Together
 
-Now, let's see how we can put the S3 bucket and Spilo together. We can take the systemd unit file from the [previous blog post](https://www.proventa.io/blog/Patroni-PostgreSQL-High-Availability) and modify it to include the S3 bucket. The modified systemd unit file should look like this:
+Now, let's see how we can put the S3 bucket and Spilo together. We can take the systemd unit file from the [previous blog post](./blog-Running_Spilo.md) and modify it to include the S3 bucket. The modified systemd unit file should look like this:
 
 ```yaml
 ... # Omitted for brevity
