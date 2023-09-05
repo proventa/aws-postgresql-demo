@@ -10,13 +10,13 @@ In our previous blog post, we embarked on a journey to set up a highly available
 
 In a highly available PostgreSQL cluster, load balancing is a must-have feature. There are many ways on how we can take advantage of the load balancer.
 
-One option is to distribute the traffic across the cluster nodes. The load balancer can be configured so that it distributes read traffic across all the nodes in the cluster and write traffic to the primary node. However, in our case, we will be using the replicas as stand by replicas not active replicas. This means that the replicas will not be used for any incoming requests, but rather as a failover node in case the primary node goes down. 
+One option is to distribute the traffic across the cluster nodes. The load balancer can be configured so that it distributes read traffic across all the nodes in the cluster and write traffic to the primary node. However, in our case, we will be using the replicas as standby replicas, not active replicas. This means that the replicas will not be used for any incoming requests but rather as a failover node in case the primary node goes down.
 
 So, the other option is to use the load balancer to determine the master node, to which the incoming requests can be routed. If the master node fails, the load balancer can <b>automatically</b> decide which node is the new master and route the requests to that node. This is the approach we will be using.
 
 ## Why S3 bucket?
 
-In a highly available PostgreSQL cluster, it is important to have a backup of the database. The backup can be used to restore the database in case of a disaster. The backup can also be used to create new replicas, instead of streaming the data directly from the primary node. This is useful when the primary node is under heavy load and we want to create a new replica without affecting the performance of the primary node.
+In a highly available PostgreSQL cluster, it is important to have a backup of the database. The backup can be used to restore the database in case of a disaster. The backup can also be used to create new replicas, instead of streaming the data directly from the primary node. This is useful when the primary node is under heavy load, and we want to create a new replica without affecting the performance of the primary node.
 
 The backup can be stored in a file system or in an S3 bucket. The advantage of using an S3 bucket is that it is highly available and durable. According to the [AWS documentation](https://aws.amazon.com/s3/storage-classes/?nc1=h_ls), the standard S3 bucket is designed to deliver 99.999999999% durability and 99.99% availability of objects over a given year. This means that the S3 bucket is highly available and durable. It is also easy to set up and configure, since Spilo provides a way to automatically create WAL-E / WAL-G backups and store them in an S3 bucket. We will be using this feature to store the backups in an S3 bucket.
 
@@ -49,7 +49,7 @@ The first step is to create a new Target Group. The Target Group is a group of i
     register: tg
 ```
 
-In the `health_check_port ` parameter, we specify the port on which the health check will be performed. In our case, we will be using the health check endpoint provided by Patroni. The health check endpoint is available on port 8008. The `successful_response_codes` parameter specifies the response codes that are considered successful. In our case, we will only forward the traffic to the master node, so we will only consider the response code 200 as successful. The replica nodes will return the response code 503, which means that the node is not available to receive traffic.
+In the `health_check_port` parameter, we specify the port on which the health check will be performed. In our case, we will be using the health check endpoint provided by Patroni. The health check endpoint is available on port 8008. The `successful_response_codes` parameter specifies the response codes that are considered successful. In our case, we will only forward the traffic to the master node, so we will only consider the response code 200 as successful. The replica nodes will return the response code 503, which means that the node is not available to receive traffic.
 
 The next step is to create a new Load Balancer. We will create a new Load Balancer called `patroni-nlb` and add the Target Group `patroni-tg` to it. We can use the following Ansible task to create the Load Balancer:
 
@@ -70,7 +70,7 @@ community.aws.elb_network_lb:
 
 In the `subnets` parameter, we specify the subnets in which the load balancer will be created. In our case, we will be using the subnet in which our PostgreSQL cluster is running. In the `listeners` parameter, we specify the port on which the load balancer will listen for incoming requests. In our case, we will be using port 5432, which is the default port for PostgreSQL. We also specify the Target Group that will receive the incoming requests. In our case, we will be using the Target Group `patroni-tg` that we created in the previous step.
 
-The load balancer will be assigned with a DNS name. Since, we are assigning the load balancer in a public subnet, the DNS name will be publicly accessible. We can use the DNS name to connect to the PostgreSQL cluster. To get the DNS name of the load balancer, we can navigate to the AWS console and select the load balancer or we can use the following command on your terminal:
+The load balancer will be assigned with a DNS name. Since we are assigning the load balancer in a public subnet, the DNS name will be publicly accessible. We can use the DNS name to connect to the PostgreSQL cluster. To get the DNS name of the load balancer, we can navigate to the AWS console and select the load balancer or we can use the following command on your terminal:
 
 ```bash
 aws elbv2 describe-load-balancers --names patroni-nlb --query 'LoadBalancers[*].DNSName' --output text
@@ -148,7 +148,7 @@ The next step is to create a new IAM Role that will be used by the EC2 instances
     policy_json : "{{ lookup('file', './patroni-wal-role-policy.json')|string }}"
 ```
 
-Notice that we are using the `assume_role_policy_document` parameter to specify on which resources the IAM Role can be assumed. In our case, we will be using the EC2 instances running the Spilo image. We are also using the `policy_json` parameter to specify the permissions that the IAM Role will have. In our case, we will be using the permissions provided by the `patroni-wal-role-policy.json` file. The permissions in the file are the minimum permissions required to access the S3 bucket. To get the details about the permissions, you can refer to our [Github repository](https://github.com/proventa/aws-postgresql-demo).
+Notice that we are using the `assume_role_policy_document` parameter to specify on which resources the IAM Role can be assumed. In our case, we will be using the EC2 instances running the Spilo image. We are also using the `policy_json` parameter to specify the permissions that the IAM Role will have. In our case, we will be using the permissions provided by the `patroni-wal-role-policy.json` file. The permissions in the file are the minimum permissions required to access the S3 bucket. To get the details about the permissions, you can refer to our [GitHub repository](https://github.com/proventa/aws-postgresql-demo).
 
 ## Putting the S3 Bucket and Spilo Together
 
@@ -180,7 +180,7 @@ ExecStart=/usr/bin/podman \
 ... # Omitted for brevity
 ```
 
-We are specifying the AWS_REGION, WAL_S3_BUCKET and AWS_ROLE_ARN environment variables. The AWS_REGION environment variable specifies the region in which the S3 bucket is located. The WAL_S3_BUCKET environment variable specifies the name of the S3 bucket. The AWS_ROLE_ARN environment variable specifies the ARN of the IAM Role. The IAM Role will be used by the EC2 instances running the Spilo image to access the S3 bucket.
+We are specifying the `AWS_REGION`, `WAL_S3_BUCKET`, and `AWS_ROLE_ARN` environment variables. The `AWS_REGION` environment variable specifies the region in which the S3 bucket is located. The `WAL_S3_BUCKET` environment variable specifies the name of the S3 bucket. The `AWS_ROLE_ARN` environment variable specifies the ARN of the IAM Role. The IAM Role will be used by the EC2 instances running the Spilo image to access the S3 bucket.
 
 Now, let's check if the backups are being stored in the S3 bucket. We can do so by navigating to the AWS console and selecting the `patroni-demo-bucket` S3 bucket. We should see a new folder called `spilo` in the S3 bucket. The folder should contain a folder with the name of your Patroni cluster and inside that folder, we should see the WAL-G backups. We can also check if the backups are being stored in the S3 bucket by running the following command on your terminal:
 
@@ -200,4 +200,4 @@ With that we can see that the backups are being stored in the S3 bucket.
 
 ## Wrapping Up
 
-There you have it! We have seen how we can leverage a network load balancer and an S3 bucket for a highly available PostgreSQL cluster. By using the Network Load Balancer and Amazon S3 Bucket, we've made our PostgreSQL cluster more robust and safer. With the Load Balancer, our system can efficiently handle traffic even if one node fails, keeping things running smoothly. Plus, the S3 bucket gives us a secure place to store our data backups, so we're ready for any surprises that come our way.  Thanks for reading! We hope you found this blog post helpful!
+There you have it! We have seen how we can leverage a network load balancer and an S3 bucket for a highly available PostgreSQL cluster. By using the Network Load Balancer and Amazon S3 Bucket, we've made our PostgreSQL cluster more robust and safer. With the Load Balancer, our system can efficiently handle traffic even if one node fails, keeping things running smoothly. Plus, the S3 bucket gives us a secure place to store our data backups, so we're ready for any surprises that come our way. Thanks for reading! We hope you found this blog post helpful!
