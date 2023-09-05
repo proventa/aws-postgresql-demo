@@ -114,7 +114,7 @@
 
     - name: Create target list
       set_fact:
-        target_list: "{{ target_list | default([]) + [{'Id': item, 'Port': 5432}] }}"
+        target_list: "{{ target_list | default([]) + [{'Id': item, 'Port': 6432}] }}"
       loop: "{{ ec2_instance.instance_ids }}"
 
     - name: Ensure Target Group for Patroni cluster exist
