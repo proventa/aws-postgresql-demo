@@ -1,0 +1,45 @@
+- name: Create Fedora CoreOS and its needed resources
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    instance_type: t2.micro
+    instance_count: 1
+    instance_region: eu-central-1
+    ami_id: ami-04d3750b706767b83 # Fedora CoreOS
+    ec2_tags:
+      cluster: patroni
+      env: demo
+  tasks:
+    - name: Prepare all folders needed
+      ansible.builtin.file:
+        path: "../{{ item }}"
+        state: directory
+      with_items:
+        - tmp
+        - keys
+        - bin
+        - certs
+
+    - include_tasks: ../network_conf-task.yml
+
+    - include_tasks: ../keys_and_certs-task.yml
+
+    - name: Prepare ignition file # Converting Butane to Ignition
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-patroni/butane.patroni.yaml > ../tmp/patroni.ign
+
+    - name: Start Fedora CoreOS instances
+      amazon.aws.ec2_instance:
+        state: running
+        instance_type: "{{ instance_type }}"
+        image_id: "{{ ami_id }}"
+        count: "{{ instance_count }}"
+        region: "{{ instance_region }}"
+        network:
+          assign_public_ip: true
+        security_group: "{{ sg.group_name }}"
+        vpc_subnet_id: "{{ patroni_subnet.subnet.id }}"
+        key_name: "{{ key_pair.key.name }}"
+        tags: "{{ ec2_tags }}"
+        user_data: "{{ lookup('file', '../tmp/monitoring.ign')|string }}"
+      register: ec2_instance
