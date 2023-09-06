@@ -9,6 +9,7 @@
     instance_region_az: eu-central-1a
     ami_id: ami-04d3750b706767b83 # Fedora CoreOS
     s3_bucket_name: patroni-demo-bucket
+    db_password_for_pgbouncer: "zalando"
     etcd_tags:
       cluster: etcd
       env: demo
@@ -91,6 +92,9 @@
         state: present
         region: "{{ instance_region }}"
         policy_json : "{{ lookup('file', './patroni-wal-role-policy.json')|string }}"
+
+    - name: Create a file containing DB Password for PGBouncer
+      ansible.builtin.shell: echo "{{ db_password_for_pgbouncer }}" > ../tmp/.secretfile
 
     - name: Prepare ignition file # Converting Butane to Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-patroni/butane.patroni.yaml > ../tmp/patroni.ign
