@@ -94,7 +94,7 @@
         policy_json : "{{ lookup('file', './patroni-wal-role-policy.json')|string }}"
 
     - name: Create a file containing DB Password for PGBouncer
-      ansible.builtin.shell: echo "{{ db_password_for_pgbouncer }}" > ../tmp/.secretfile
+      ansible.builtin.shell: echo -n "{{ db_password_for_pgbouncer }}" > ../tmp/.secretfile
 
     - name: Prepare ignition file # Converting Butane to Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-patroni/butane.patroni.yaml > ../tmp/patroni.ign
