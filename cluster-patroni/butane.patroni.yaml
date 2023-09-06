@@ -14,7 +14,7 @@ systemd:
         enabled: true
         contents: |
           [Unit]
-          Description=Preparing Fedora CoreOS for Patroni. Turning SELinux to Permissive, creating client certs and updating CA Trust
+          Description=Preparing Fedora CoreOS for Patroni. Turning SELinux to Permissive, and creating client certs
 
           ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
           ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
@@ -26,6 +26,7 @@ systemd:
           ExecStartPre=/usr/sbin/setenforce 0
           ExecStartPre=/usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
           ExecStart=/usr/local/bin/generate-client-cert.sh
+          ExecStartPost=/usr/bin/cp /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem /etc/pki/ca-trust/source/anchors/
           ExecStartPost=/usr/bin/update-ca-trust
           
           RemainAfterExit=yes
@@ -84,13 +85,38 @@ systemd:
           [Install]
           WantedBy=multi-user.target
 
+      - name: secret.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description= Creating Podman secrets for PGBouncer
+
+          ConditionPathExists=/usr/local/bin/.secretfile
+          ConditionFileNotEmpty=/usr/local/bin/.secretfile
+
+          Requires=patroni.service
+          After=patroni.service
+
+          [Service]
+          User=patroni-user
+
+          ExecStartPre=-/usr/bin/podman secret rm pgbouncer-password
+          ExecStart=/usr/bin/podman secret create pgbouncer-password /usr/local/bin/.secretfile
+          ExecStartPost=/usr/bin/echo -n "--" > /usr/local/bin/.secretfile # File should be overwritten, but atm it is not
+
+          RemainAfterExit=yes
+          Type=oneshot
+
+          [Install]
+          WantedBy=multi-user.target
+
       - name: pgbouncer.service
         enabled: true
         contents: |
           [Unit]
           Description=PGCat Connection pooling with Podman
 
-          After=patroni.service
+          After=secret.service
 
           [Service]
           User=patroni-user
@@ -107,20 +133,20 @@ systemd:
             --net=host \
             --name pgbouncer-container \
             --volume /etc/ssl/etcd-certs:/opt/bitnami/pgbouncer/certs \
-            --env PGBOUNCER_CLIENT_TLS_SSLMODE=require \
-            --env PGBOUNCER_CLIENT_TLS_CA_FILE=/opt/bitnami/pgbouncer/certs/proventa-etcd-root-ca.pem \
-            --env PGBOUNCER_CLIENT_TLS_CERT_FILE=/opt/bitnami/pgbouncer/certs/proventa-etcd-client-cert.pem \
-            --env PGBOUNCER_CLIENT_TLS_KEY_FILE=/opt/bitnami/pgbouncer/certs/proventa-etcd-client-cert-key.pem \
-            --env POSTGRESQL_DATABASE="postgres" \
-            --env POSTGRESQL_HOST="localhost" \
-            --env POSTGRESQL_PORT="5432" \
-            --env POSTGRESQL_USERNAME="postgres" \
-            --env POSTGRESQL_PASSWORD="zalando" \
-            --env PGBOUNCER_AUTH_TYPE="scram-sha-256" \
-            --env PGBOUNCER_AUTH_QUERY="SELECT username, password FROM public.lookup($1)" \
-            --env PGBOUNCER_AUTH_USER="pgbouncer" \
-            --env PGBOUNCER_USERLIST='"pgbouncer" "pgbouncer"' \
-            docker.io/bitnami/pgbouncer:1.20.1
+            --env DB_HOST="localhost" \
+            --env DB_NAME="postgres" \
+            --env DB_PORT="5432" \
+            --env DB_USER="postgres" \
+            --secret=pgbouncer-password,type=env,target=DB_PASSWORD \
+            --env AUTH_USER="pgbouncer" \
+            --env AUTH_QUERY="SELECT username, password FROM public.lookup($1)" \
+            --env AUTH_TYPE="scram-sha-256" \
+            --env LISTEN_PORT="6432" \
+            --env CLIENT_TLS_SSLMODE="require" \
+            --env CLIENT_TLS_KEY_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-client-cert-key.pem" \
+            --env CLIENT_TLS_CERT_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-client-cert.pem" \
+            --env CLIENT_TLS_CA_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-root-ca.pem" \
+            docker.io/edoburu/pgbouncer:1.20.1-p0
 
           ExecStop=/usr/bin/podman rm -f pgbouncer-container
 
@@ -149,11 +175,6 @@ storage:
           contents:
             local: certs/proventa-etcd-root-ca-key.pem
 
-        - path: /etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
-          mode: 0644
-          contents:
-            local: certs/proventa-etcd-root-ca.pem
-
         - path: /usr/local/bin/generate-client-cert.sh
           mode: 0755
           contents:
@@ -163,3 +184,12 @@ storage:
           mode: 0755
           contents:
             local: scripts/prepare_pgbouncer_auth.sh
+
+        - path: /usr/local/bin/.secretfile
+          mode: 0600
+          user:
+            id: 1001
+          group:
+            id: 1001
+          contents:
+            local: tmp/.secretfile
