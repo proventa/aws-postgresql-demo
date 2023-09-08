@@ -8,7 +8,7 @@
     instance_region: eu-central-1
     ami_id: ami-04d3750b706767b83 # Fedora CoreOS
     ec2_tags:
-      cluster: patroni
+      cluster: monitoring
       env: demo
   tasks:
     - name: Prepare all folders needed
@@ -26,7 +26,7 @@
     - include_tasks: ../keys_and_certs-task.yml
 
     - name: Prepare ignition file # Converting Butane to Ignition
-      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-patroni/butane.patroni.yaml > ../tmp/patroni.ign
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-monitoring/butane.monitoring.yaml > ../tmp/monitoring.ign
 
     - name: Start Fedora CoreOS instances
       amazon.aws.ec2_instance:
