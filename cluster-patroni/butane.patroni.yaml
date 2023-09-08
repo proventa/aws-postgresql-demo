@@ -136,10 +136,9 @@ systemd:
             --env DB_HOST="localhost" \
             --env DB_NAME="postgres" \
             --env DB_PORT="5432" \
-            --env DB_USER="postgres" \
-            --secret=pgbouncer-password,type=env,target=DB_PASSWORD \
             --env AUTH_USER="pgbouncer" \
-            --env AUTH_QUERY="SELECT username, password FROM public.lookup($1)" \
+            --env AUTH_FILE="/opt/bitnami/pgbouncer/certs/userlist.txt" \
+            --env AUTH_QUERY="SELECT username, password FROM pgbouncer.get_auth($1)" \
             --env AUTH_TYPE="scram-sha-256" \
             --env LISTEN_PORT="6432" \
             --env CLIENT_TLS_SSLMODE="require" \
@@ -148,6 +147,36 @@ systemd:
             --env CLIENT_TLS_CA_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-root-ca.pem" \
             docker.io/edoburu/pgbouncer:1.20.1-p0
 
+          ExecStop=/usr/bin/podman rm -f pgbouncer-container
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: pg-exporter.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Postgres Exporter with Podman
+
+          After=pgbouncer.service
+
+          [Service]
+          User=patroni-user
+          Restart=always
+          RestartSec=5s
+          TimeoutStartSec=0
+          LimitNOFILE=40000
+
+          ExecStartPre=/usr/bin/podman rm -f pgbouncer-container
+          ExecStart=/usr/bin/podman run \
+            --rm \
+            --name pg-exporter-container \
+            --net=host \
+            --secret=pgbouncer-password,type=env,target=POSTGRES_PASSWORD \
+            --volume=/usr/local/share/postgres_exporter.yml:/etc/postgres_exporter.yml \
+            --env DATA_SOURCE_NAME="postgresql://postgres:zalando@localhost:5432?sslmode=disable" \
+            quay.io/prometheuscommunity/postgres-exporter \
+              --config.file=/etc/postgres_exporter.yml
           ExecStop=/usr/bin/podman rm -f pgbouncer-container
 
           [Install]
@@ -185,6 +214,11 @@ storage:
           contents:
             local: scripts/prepare_pgbouncer_auth.sh
 
+        - path: /etc/ssl/etcd-certs/userlist.txt
+          mode: 0644
+          contents:
+            local: tmp/userlist.txt
+
         - path: /var/tmp/.secretfile
           mode: 0600
           user:
@@ -193,3 +227,8 @@ storage:
             id: 1001
           contents:
             local: tmp/.secretfile
+
+        - path: /usr/local/share/postgres_exporter.yml
+          mode: 0644
+          contents:
+            local: cluster-patroni/postgres_exporter.yml
