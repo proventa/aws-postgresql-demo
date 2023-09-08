@@ -88,6 +88,18 @@
         ports:
           - 6432
         cidr_ip: "0.0.0.0/0"
+      - proto: tcp # Allow postgrex_exporter connections from anywhere
+        ports:
+          - 9187
+        cidr_ip: "0.0.0.0/0"
+      - proto: tcp # Allow Prometheus connections from anywhere
+        ports:
+          - 9090
+        cidr_ip: "0.0.0.0/0"
+      - proto: tcp # Allow Grafana connections from anywhere
+        ports:
+          - 3000
+        cidr_ip: "0.0.0.0/0"
     state: present
     tags:
       env: demo
