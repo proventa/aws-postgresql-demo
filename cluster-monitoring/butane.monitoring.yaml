@@ -56,11 +56,9 @@ systemd:
             --rm \
             --net=host \
             --name prometheus-container \
+            --volume=/usr/local/share/prometheus.yml:/etc/prometheus/prometheus.yml \
             docker.io/prom/prometheus:v2.46.0 \
-            --config.file=/etc/prometheus/prometheus.yml \
-            --storage.tsdb.path=/var/lib/prometheus \
-            --web.console.libraries=/usr/share/prometheus/console_libraries \
-            --web.console.templates=/usr/share/prometheus/consoles
+            --config.file=/etc/prometheus/prometheus.yml
 
           ExecStop=/usr/bin/podman rm -f prometheus-container
 
@@ -89,13 +87,7 @@ systemd:
             --rm \
             --net=host \
             --name grafana-container \
-            docker.io/grafana/grafana:7.5.7 \
-            --config=/etc/grafana/grafana.ini \
-            --homepath=/usr/share/grafana \
-            --packaging=docker \
-            cfg:default.paths.data=/var/lib/grafana \
-            cfg:default.paths.logs=/var/log/grafana \
-            cfg:default.paths.plugins=/var/lib/grafana/plugins
+            docker.io/grafana/grafana:7.5.7
 
           ExecStop=/usr/bin/podman rm -f grafana-container
 
@@ -128,3 +120,8 @@ storage:
           mode: 0755
           contents:
             local: scripts/generate-client-cert.sh
+
+        - path: /usr/local/share/prometheus.yml
+          mode: 0644
+          contents:
+            local: cluster-monitoring/prometheus.yml
