@@ -10,3 +10,9 @@ scrape_configs:
   - targets: [{% for ip in private_ips %}'{{ ip }}:9187'{% if not loop.last %},{% endif %}{% endfor %}]
     labels:
       group: 'postgres'
+  tls_config:
+    ca_file: "/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem"
+    cert_file: "/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem"
+    key_file: "/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem"
+    insecure_skip_verify: false
+  scheme: https

@@ -56,6 +56,7 @@ systemd:
             --rm \
             --net=host \
             --name prometheus-container \
+            --volume=/etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
             --volume=/usr/local/share/prometheus.yml:/etc/prometheus/prometheus.yml \
             docker.io/prom/prometheus:v2.46.0 \
             --config.file=/etc/prometheus/prometheus.yml

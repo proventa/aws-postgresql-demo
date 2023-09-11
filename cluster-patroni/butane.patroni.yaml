@@ -28,6 +28,7 @@ systemd:
           ExecStart=/usr/local/bin/generate-client-cert.sh
           ExecStartPost=/usr/bin/cp /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem /etc/pki/ca-trust/source/anchors/
           ExecStartPost=/usr/bin/update-ca-trust
+          ExecStartPost=/usr/local/bin/prepare_pg-exporter.sh
           
           RemainAfterExit=yes
           Type=oneshot
@@ -64,7 +65,7 @@ systemd:
             --name patroni-container \
             --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
             --volume ${HOME}/patroni:/home/postgres/pgdata \
-            --env SCOPE=spiderman \
+            --env SCOPE=batman \
             --env PGVERSION=15 \
             --env ETCD3_PROTOCOL="https" \
             --env ETCD3_HOSTS="${ETCD_HOSTS}" \
@@ -167,7 +168,6 @@ systemd:
           TimeoutStartSec=0
           LimitNOFILE=40000
 
-          ExecStartPre=/usr/local/bin/prepare_pg-exporter.sh
           ExecStartPre=/usr/bin/podman rm -f pg-exporter-container
           ExecStart=/usr/bin/podman run \
             --rm \
