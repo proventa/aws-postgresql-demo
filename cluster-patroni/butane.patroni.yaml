@@ -224,6 +224,6 @@ storage:
             local: tmp/userlist.txt
           
         - path: /usr/local/bin/prepare_pg-exporter.sh
-          mode: 0644
+          mode: 0755
           contents:
             local: scripts/prepare_pg-exporter.sh
