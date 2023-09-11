@@ -44,7 +44,7 @@
     - name: Create IP Addresses File
       ansible.builtin.template:
         src: prometheus-template.j2
-        dest: prometheus.yml
+        dest: ../tmp/prometheus.yml
 
     - name: Prepare ignition file # Converting Butane to Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-monitoring/butane.monitoring.yaml > ../tmp/monitoring.ign
