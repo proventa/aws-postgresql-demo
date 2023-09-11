@@ -7,6 +7,6 @@ global:
 scrape_configs:
 - job_name: 'postgres-exporter'
   static_configs:
-  - targets: "[{% for ip in private_ips %}{{ ip }}:8008{% if not loop.last %},{% endif %}{% endfor %}]"
+  - targets: [{% for ip in private_ips %}'{{ ip }}:9187'{% if not loop.last %},{% endif %}{% endfor %}]
     labels:
       group: 'postgres'
