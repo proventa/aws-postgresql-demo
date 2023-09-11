@@ -88,7 +88,7 @@
         ports:
           - 8008
         cidr_ip: "10.0.2.0/24"
-      - proto: tcp # patroni - etcd communication
+      - proto: tcp # patroni <-> etcd communication
         from_port: 2379
         to_port: 2380
         cidr_ip: "10.0.2.0/24"
@@ -100,14 +100,18 @@
         ports:
           - 6432
         cidr_ip: "0.0.0.0/0"
-      - proto: tcp # Allow postgrex_exporter connections from anywhere
+      - proto: tcp # Postgres_exporter -> Prometheus communication
         ports:
           - 9187
-        cidr_ip: "0.0.0.0/0"
-      - proto: tcp # Allow Prometheus connections from anywhere
+        cidr_ip: "10.0.2.0/24"
+      - proto: tcp # Prometheus -> Postgres_exporter communication
+        ports:
+          - 9187
+        cidr_ip: "10.0.3.0/24"
+      - proto: tcp # Prometheus <-> Grafana communication
         ports:
           - 9090
-        cidr_ip: "0.0.0.0/0"
+        cidr_ip: "10.0.3.0/24"
       - proto: tcp # Allow Grafana connections from anywhere
         ports:
           - 3000
