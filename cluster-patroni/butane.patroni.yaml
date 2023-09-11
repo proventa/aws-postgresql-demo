@@ -64,7 +64,7 @@ systemd:
             --name patroni-container \
             --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
             --volume ${HOME}/patroni:/home/postgres/pgdata \
-            --env SCOPE=superman \
+            --env SCOPE=spiderman \
             --env PGVERSION=15 \
             --env ETCD3_PROTOCOL="https" \
             --env ETCD3_HOSTS="${ETCD_HOSTS}" \
@@ -167,17 +167,21 @@ systemd:
           TimeoutStartSec=0
           LimitNOFILE=40000
 
-          ExecStartPre=/usr/bin/podman rm -f pgbouncer-container
+          ExecStartPre=/usr/local/bin/prepare_pg-exporter.sh
+          ExecStartPre=/usr/bin/podman rm -f pg-exporter-container
           ExecStart=/usr/bin/podman run \
             --rm \
             --name pg-exporter-container \
             --net=host \
-            --secret=pgbouncer-password,type=env,target=POSTGRES_PASSWORD \
+            --volume=/etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
+            --volume=/usr/local/share/web-config.yml:/etc/web-config.yml \
             --volume=/usr/local/share/postgres_exporter.yml:/etc/postgres_exporter.yml \
             --env DATA_SOURCE_NAME="postgresql://postgres:zalando@localhost:5432?sslmode=disable" \
             quay.io/prometheuscommunity/postgres-exporter \
-              --config.file=/etc/postgres_exporter.yml
-          ExecStop=/usr/bin/podman rm -f pgbouncer-container
+              --config.file=/etc/postgres_exporter.yml \
+              --web.config.file=/etc/web-config.yml
+
+          ExecStop=/usr/bin/podman rm -f pg-exporter-container
 
           [Install]
           WantedBy=multi-user.target
@@ -218,17 +222,8 @@ storage:
           mode: 0644
           contents:
             local: tmp/userlist.txt
-
-        - path: /var/tmp/.secretfile
-          mode: 0600
-          user:
-            id: 1001
-          group:
-            id: 1001
-          contents:
-            local: tmp/.secretfile
-
-        - path: /usr/local/share/postgres_exporter.yml
+          
+        - path: /usr/local/bin/prepare_pg-exporter.sh
           mode: 0644
           contents:
-            local: cluster-patroni/postgres_exporter.yml
+            local: scripts/prepare_pg-exporter.sh
