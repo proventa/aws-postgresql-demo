@@ -82,12 +82,16 @@ systemd:
 
           ExecStartPre=/usr/bin/loginctl enable-linger monitoring-user
           ExecStartPre=/usr/bin/podman rm -f grafana-container
+          ExecStartPre=-/usr/bin/podman volume create grafana-storage
           ExecStart=/usr/bin/podman \
             run \
             --rm \
             --net=host \
             --name grafana-container \
-            docker.io/grafana/grafana:7.5.7
+            --volume=grafana-storage:/var/lib/grafana \
+            --env=GF_SECURITY_ADMIN_PASSWORD=grafana \
+            docker.io/grafana/grafana:7.5.7 \
+            cfg:default.paths.data=/var/lib/grafana
 
           ExecStop=/usr/bin/podman rm -f grafana-container
 
