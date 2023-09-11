@@ -59,7 +59,7 @@
         network:
           assign_public_ip: true
         security_group: "{{ sg.group_name }}"
-        vpc_subnet_id: "{{ patroni_subnet.subnet.id }}"
+        vpc_subnet_id: "{{ monitoring_subnet.subnet.id }}"
         key_name: "{{ key_pair.key.name }}"
         tags: "{{ ec2_tags }}"
         user_data: "{{ lookup('file', '../tmp/monitoring.ign')|string }}"
