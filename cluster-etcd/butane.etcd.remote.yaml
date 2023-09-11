@@ -1,0 +1,175 @@
+variant: fcos
+version: 1.5.0
+passwd:
+    users:
+      - name: core
+        ssh_authorized_keys_local:
+          - keys/core.pub
+      - name: etcd-user
+        ssh_authorized_keys_local:
+          - keys/etcd-user.pub
+systemd:
+    units:
+      - name: setup-network-environment.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Setup Network Environment
+          Documentation=https://github.com/kelseyhightower/setup-network-environment
+
+          Requires=network-online.target
+          After=network-online.target
+
+          [Service]
+          ExecStartPre=/usr/local/bin/selinux-permissive.sh
+          ExecStartPre=/usr/bin/update-ca-trust
+
+          ExecStartPre=-/usr/bin/mkdir -p /opt/bin
+          ExecStartPre=curl -o /opt/bin/setup-network-environment -LJO https://github.com/kelseyhightower/setup-network-environment/releases/download/v1.0.0/setup-network-environment
+
+          ExecStartPre=/usr/bin/chmod +x /opt/bin/setup-network-environment
+          ExecStart=/opt/bin/setup-network-environment
+          ExecStartPost=/usr/local/bin/append-discovery-addr.sh
+          RemainAfterExit=yes
+          Type=oneshot
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: create-client-cert.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Create Client Cert
+
+          ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+          ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+
+          Requires=setup-network-environment.service
+          After=setup-network-environment.service
+
+          [Service]
+          ExecStart=/usr/local/bin/generate-client-cert.sh
+          
+          RemainAfterExit=yes
+          Type=oneshot
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: etcd.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=etcd with Podman
+          Documentation=https://github.com/coreos/etcd
+
+          ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+          ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+
+          After=setup-network-environment.service
+          Requires=setup-network-environment.service
+
+          [Service]
+          User=etcd-user
+          EnvironmentFile=/etc/network-environment
+          Restart=always
+          RestartSec=5s
+          TimeoutStartSec=0
+          LimitNOFILE=40000
+
+          ExecStartPre=/usr/bin/loginctl enable-linger etcd-user
+          ExecStartPre=/usr/bin/mkdir -p ${HOME}/etcd-data
+          ExecStartPre=/usr/bin/chmod 700 ${HOME}/etcd-data
+          ExecStartPre=/usr/bin/podman rm -f etcd-container
+          ExecStart=/usr/bin/podman \
+            run \
+            --rm \
+            --net=host \
+            --name etcd-container \
+            --volume=${HOME}/etcd-data:/etcd-data \
+            --volume=/etc/ssl/etcd-certs/:/etcd-certs \
+            gcr.io/etcd-development/etcd:v3.5.9 \
+            /usr/local/bin/etcd \
+            --name etcd-${DEFAULT_IPV4} \
+            --data-dir /etcd-data \
+            --listen-client-urls https://${DEFAULT_IPV4}:2379,http://127.0.0.1:2379 \
+            --advertise-client-urls https://${DEFAULT_IPV4}:2379 \
+            --listen-peer-urls https://${DEFAULT_IPV4}:2380 \
+            --initial-advertise-peer-urls https://${DEFAULT_IPV4}:2380 \
+            --client-cert-auth \
+            --cert-file /etcd-certs/proventa-etcd-client-cert.pem \
+            --key-file /etcd-certs/proventa-etcd-client-cert-key.pem \
+            --trusted-ca-file /etcd-certs/proventa-etcd-root-ca.pem \
+            --peer-client-cert-auth \
+            --peer-cert-file /etcd-certs/proventa-etcd-client-cert.pem \
+            --peer-key-file /etcd-certs/proventa-etcd-client-cert-key.pem \
+            --peer-trusted-ca-file /etcd-certs/proventa-etcd-root-ca.pem \
+            --discovery=${ETCD_DISCOVERY_ADDR}
+          ExecStop=/usr/bin/podman rm -f etcd-container
+          ExecStopPost=/usr/bin/rm -rf ${HOME}/etcd-data
+
+          [Install]
+          WantedBy=multi-user.target
+storage:
+    files:
+        - path: /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-gencert-config.json
+
+        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca-key.pem
+
+        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca.pem
+
+        - path: /etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca.pem
+
+        - path: /usr/local/bin/etcd-discovery-cluster.txt
+          mode: 0644
+          contents:
+            local: tmp/etcd-discovery-cluster.txt
+
+        - path: /usr/local/bin/generate-client-cert.sh
+          mode: 0755
+          contents:
+            local: scripts/generate-client-cert.sh
+
+        - path: /usr/local/bin/selinux-permissive.sh
+          mode: 0755
+          contents:
+            inline: |
+              #!/bin/bash
+              setenforce 0
+              sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+              exit 0
+
+        - path: /usr/local/bin/append-discovery-addr.sh
+          mode: 0755
+          contents:
+            inline: |
+              #!/bin/bash
+              MAX_RETRIES=10
+              RETRIES=0
+              while [ ! -f /usr/local/bin/etcd-discovery-cluster.txt ]; do
+                sleep 1
+                RETRIES=$((RETRIES+1))
+                if [ $RETRIES -eq $MAX_RETRIES ]; then
+                  echo "Failed to find discovery file after $MAX_RETRIES retries"
+                  exit 1
+                fi
+              done
+
+              ETCD_DISCOVERY_ADDR=$(cat /usr/local/bin/etcd-discovery-cluster.txt)
+
+              tee -a /etc/network-environment <<EOF
+              ETCD_DISCOVERY_ADDR=${ETCD_DISCOVERY_ADDR}
+              EOF
