@@ -1,0 +1,12 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'ha-postgres-monitor'
+
+scrape_configs:
+- job_name: 'postgres-exporter'
+  static_configs:
+  - targets: "[{% for ip in private_ips %}{{ ip }}:8008{% if not loop.last %},{% endif %}{% endfor %}]"
+    labels:
+      group: 'postgres'
