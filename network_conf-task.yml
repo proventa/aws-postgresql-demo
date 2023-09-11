@@ -120,3 +120,13 @@
     tags:
       env: demo
   register: sg
+
+- name: Ensure that a S3 Bucket for Ignition files exists
+  amazon.aws.s3_bucket:
+    name: postgresdemo-ignition-files
+    state: present
+    region: "{{ instance_region }}"
+    tags:
+      Name: postgresdemo-ignition-files
+      env: demo
+  register: ignitionfiles_bucket
