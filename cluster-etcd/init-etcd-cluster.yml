@@ -28,14 +28,14 @@
     - name: Create a new etcd discovery service cluster
       ansible.builtin.shell: curl https://discovery.etcd.io/new?size={{ instance_count }} > ../tmp/etcd-discovery-cluster.txt
 
-    - name: Prepare remote ignition file # Converting Butane to Ignition
+    - name: Prepare remote ignition file # Converting Butane to Remote Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-etcd/butane.etcd.remote.yaml > ../tmp/etcd.remote.ign
-
-    - name: Prepare ignition file # Converting Butane to Ignition
-      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-etcd/butane.etcd.yaml > ../tmp/etcd.ign
 
     - name: Uploading the ignition file to S3
       ansible.builtin.shell: aws s3 cp ../tmp/etcd.remote.ign s3://postgresdemo-ignition-files/etcd.remote.ign
+
+    - name: Prepare ignition file # Converting Butane to Local Ignition
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-etcd/butane.etcd.yaml > ../tmp/etcd.ign
 
     - name: Start Fedora CoreOS instances
       amazon.aws.ec2_instance:
