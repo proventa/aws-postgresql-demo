@@ -3,6 +3,6 @@ auth_modules:
     type: userpass
     userpass:
       username: postgres
-      password: ${POSTGRES_PASSWORD}
+      password: zalando
     options:
       sslmode: disable
