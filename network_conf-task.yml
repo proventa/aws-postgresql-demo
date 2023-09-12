@@ -123,10 +123,10 @@
 
 - name: Ensure that a S3 Bucket for Ignition files exists
   amazon.aws.s3_bucket:
-    name: postgresdemo-ignition-files
+    name: private-ign-files
     state: present
     region: "{{ instance_region }}"
     tags:
-      Name: postgresdemo-ignition-files
+      Name: private-ign-files
       env: demo
   register: ignitionfiles_bucket

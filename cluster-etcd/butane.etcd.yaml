@@ -3,4 +3,4 @@ version: 1.5.0
 ignition:
   config:
     replace:
-      source: https://s3.eu-central-1.amazonaws.com/postgresdemo-ignition-files/etcd.remote.ign
+      source: s3://private-ign-files/etcd.remote.ign

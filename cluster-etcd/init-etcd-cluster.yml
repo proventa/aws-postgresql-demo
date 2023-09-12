@@ -25,6 +25,37 @@
 
     - include_tasks: ../keys_and_certs-task.yml
 
+    - name: Create IAM Role for Patroni WAL
+      community.aws.iam_role:
+        name: etcdRole
+        state: present
+        region: "{{ instance_region }}"
+        assume_role_policy_document: "{{ lookup('file', './assume_role_policy.json')|string }}"
+        tags:
+          Name: etcdRole
+          env: demo
+      register: iam_role
+
+    - name: Create instance profile for Patroni WAL
+      amazon.aws.iam_instance_profile:
+        name: etcdInstanceProfile
+        state: present
+        region: "{{ instance_region }}"
+        role: "{{ iam_role.role_name }}"
+        tags:
+          Name: etcdInstanceProfile
+          env: demo
+      register: iam_instance_profile
+    
+    - name: Attach S3 Policy to Patroni WAL Role
+      amazon.aws.iam_policy:
+        policy_name: etcdRolePolicy
+        iam_type: role
+        iam_name: "{{ iam_role.role_name }}"
+        state: present
+        region: "{{ instance_region }}"
+        policy_json : "{{ lookup('file', './etcd-role-policy.json')|string }}"
+
     - name: Create a new etcd discovery service cluster
       ansible.builtin.shell: curl https://discovery.etcd.io/new?size={{ instance_count }} > ../tmp/etcd-discovery-cluster.txt
 
@@ -32,7 +63,7 @@
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-etcd/butane.etcd.remote.yaml > ../tmp/etcd.remote.ign
 
     - name: Uploading the ignition file to S3
-      ansible.builtin.shell: aws s3 cp ../tmp/etcd.remote.ign s3://postgresdemo-ignition-files/etcd.remote.ign
+      ansible.builtin.shell: aws s3 cp ../tmp/etcd.remote.ign s3://private-ign-files/etcd.remote.ign
 
     - name: Prepare ignition file # Converting Butane to Local Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-etcd/butane.etcd.yaml > ../tmp/etcd.ign
@@ -51,5 +82,6 @@
         key_name: "{{ key_pair.key.name }}"
         tags: "{{ ec2_tags }}"
         user_data: "{{ lookup('file', '../tmp/etcd.ign')|string }}"
+        iam_instance_profile: "{{ iam_instance_profile.iam_instance_profile.instance_profile_name }}"
       register: ec2_instance
 
