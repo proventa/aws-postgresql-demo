@@ -104,7 +104,7 @@
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-patroni/butane.patroni.remote.yaml > ../tmp/patroni.remote.ign
 
     - name: Uploading the ignition file to S3
-      ansible.builtin.shell: aws s3 cp ../tmp/patroni.remote.ign s3://postgresdemo-ignition-files/patroni.remote.ign
+      ansible.builtin.shell: aws s3 cp ../tmp/patroni.remote.ign s3://private-ign-files/patroni.remote.ign
 
     - name: Prepare ignition file # Converting Butane to Local Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-patroni/butane.patroni.yaml > ../tmp/patroni.ign

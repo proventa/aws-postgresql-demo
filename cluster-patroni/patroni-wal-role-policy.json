@@ -2,16 +2,19 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "ListObjectsInBucket",
             "Effect": "Allow",
             "Action": ["s3:ListBucket"],
             "Resource": ["arn:aws:s3:::patroni-demo-bucket"]
         },
         {
-            "Sid": "AllObjectActions",
             "Effect": "Allow",
             "Action": "s3:*Object",
             "Resource": ["arn:aws:s3:::patroni-demo-bucket/*"]
+        },
+        {
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": ["arn:aws:s3:::private-ign-files/*"]
         }
     ]
 }
