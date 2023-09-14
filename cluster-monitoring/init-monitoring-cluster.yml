@@ -46,8 +46,45 @@
         src: prometheus-template.j2
         dest: ../tmp/prometheus.yml
 
+    - name: Prepare remote ignition file # Converting Butane to Remote Ignition
+      ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-monitoring/butane.monitoring.remote.yaml > ../tmp/monitoring.remote.ign
+
+    - name: Uploading the ignition file to S3
+      ansible.builtin.shell: aws s3 cp ../tmp/monitoring.remote.ign s3://private-ign-files/monitoring.remote.ign
+
     - name: Prepare ignition file # Converting Butane to Ignition
       ansible.builtin.shell: podman run --interactive --rm --security-opt label=disable --volume ${PWD}/../:/pwd --workdir /pwd quay.io/coreos/butane:release -d /pwd --pretty --strict cluster-monitoring/butane.monitoring.yaml > ../tmp/monitoring.ign
+
+    - name: Create IAM Role for monitoring Role
+      community.aws.iam_role:
+        name: monitoringRole
+        state: present
+        region: "{{ instance_region }}"
+        assume_role_policy_document: "{{ lookup('file', './assume_role_policy.json')|string }}"
+        tags:
+          Name: monitoringRole
+          env: demo
+      register: iam_role
+
+    - name: Create instance profile for monitoring Role
+      amazon.aws.iam_instance_profile:
+        name: monitoringInstanceProfile
+        state: present
+        region: "{{ instance_region }}"
+        role: "{{ iam_role.role_name }}"
+        tags:
+          Name: monitoringInstanceProfile
+          env: demo
+      register: iam_instance_profile
+    
+    - name: Attach S3 Policy to monitoring Role
+      amazon.aws.iam_policy:
+        policy_name: monitoringRolePolicy
+        iam_type: role
+        iam_name: "{{ iam_role.role_name }}"
+        state: present
+        region: "{{ instance_region }}"
+        policy_json : "{{ lookup('file', './monitoring-role-policy.json')|string }}"
 
     - name: Start Fedora CoreOS instances
       amazon.aws.ec2_instance:
@@ -63,4 +100,5 @@
         key_name: "{{ key_pair.key.name }}"
         tags: "{{ ec2_tags }}"
         user_data: "{{ lookup('file', '../tmp/monitoring.ign')|string }}"
+        iam_instance_profile: "{{ iam_instance_profile.iam_instance_profile.instance_profile_name }}"
       register: ec2_instance
