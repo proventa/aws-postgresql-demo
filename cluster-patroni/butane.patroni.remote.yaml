@@ -175,13 +175,44 @@ systemd:
             --net=host \
             --volume=/etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
             --volume=/usr/local/share/web-config.yml:/etc/web-config.yml \
-            --volume=/usr/local/share/postgres_exporter.yml:/etc/postgres_exporter.yml \
-            --env DATA_SOURCE_NAME="postgresql://postgres:zalando@localhost:5432?sslmode=disable" \
+            --env DATA_SOURCE_URI="localhost:5432" \
+            --env DATA_SOURCE_USER="postgres" \
+            --env DATA_SOURCE_PASS="zalando" \
             quay.io/prometheuscommunity/postgres-exporter \
-              --config.file=/etc/postgres_exporter.yml \
               --web.config.file=/etc/web-config.yml
 
           ExecStop=/usr/bin/podman rm -f pg-exporter-container
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: pgbouncer-exporter.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=PgBouncer Exporter with Podman
+
+          After=pgbouncer.service
+
+          [Service]
+          User=patroni-user
+          Restart=always
+          RestartSec=5s
+          TimeoutStartSec=0
+          LimitNOFILE=40000
+
+          ExecStartPre=/usr/bin/podman rm -f pgbouncer-exporter-container
+          ExecStart=/usr/bin/podman run \
+            --rm \
+            --name pgbouncer-exporter-container \
+            --net=host \
+            --volume=/etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
+            --volume=/usr/local/share/web-config.yml:/etc/web-config.yml \
+            docker.io/prometheuscommunity/pgbouncer-exporter \
+              --web.config.file=/etc/web-config.yml \
+              --pgBouncer.connectionString="postgresql://stats_collector:collector_stats@localhost:6432/pgbouncer"
+
+          ExecStop=/usr/bin/podman rm -f pgbouncer-exporter-container
 
           [Install]
           WantedBy=multi-user.target
