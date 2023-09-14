@@ -1,0 +1,132 @@
+variant: fcos
+version: 1.5.0
+passwd:
+    users:
+      - name: core
+        ssh_authorized_keys_local:
+          - keys/core.pub
+      - name: monitoring-user
+        ssh_authorized_keys_local:
+          - keys/monitoring-user.pub
+systemd:
+    units:
+      - name: preparation.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Preparing Fedora CoreOS for Patroni. Turning SELinux to Permissive, creating client certs and updating CA Trust
+
+          ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+          ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+
+          Requires=network-online.target
+          After=network-online.target
+
+          [Service]
+          ExecStartPre=/usr/sbin/setenforce 0
+          ExecStartPre=/usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+          ExecStart=/usr/local/bin/generate-client-cert.sh
+          ExecStartPost=/usr/bin/update-ca-trust
+          
+          RemainAfterExit=yes
+          Type=oneshot
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: prometheus.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Prometheus with Podman
+
+          After=preparation.service
+
+          [Service]
+          User=monitoring-user
+          Restart=always
+          RestartSec=5s
+          TimeoutStartSec=0
+          LimitNOFILE=40000
+
+          ExecStartPre=/usr/bin/loginctl enable-linger monitoring-user
+          ExecStartPre=/usr/bin/podman rm -f prometheus-container
+          ExecStart=/usr/bin/podman \
+            run \
+            --rm \
+            --net=host \
+            --name prometheus-container \
+            --volume=/etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
+            --volume=/usr/local/share/prometheus.yml:/etc/prometheus/prometheus.yml \
+            docker.io/prom/prometheus:v2.46.0 \
+            --config.file=/etc/prometheus/prometheus.yml
+
+          ExecStop=/usr/bin/podman rm -f prometheus-container
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: grafana.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=Grafana with Podman
+
+          After=preparation.service
+
+          [Service]
+          User=monitoring-user
+          Restart=always
+          RestartSec=5s
+          TimeoutStartSec=0
+          LimitNOFILE=40000
+
+          ExecStartPre=/usr/bin/loginctl enable-linger monitoring-user
+          ExecStartPre=/usr/bin/podman rm -f grafana-container
+          ExecStartPre=-/usr/bin/podman volume create grafana-storage
+          ExecStart=/usr/bin/podman \
+            run \
+            --rm \
+            --net=host \
+            --name grafana-container \
+            --volume=grafana-storage:/var/lib/grafana \
+            --env=GF_SECURITY_ADMIN_PASSWORD=grafana \
+            docker.io/grafana/grafana:7.5.7 \
+            cfg:default.paths.data=/var/lib/grafana
+
+          ExecStop=/usr/bin/podman rm -f grafana-container
+
+          [Install]
+          WantedBy=multi-user.target
+
+storage:
+    files:
+        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca.pem
+
+        - path: /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-gencert-config.json
+
+        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca-key.pem
+
+        - path: /etc/pki/ca-trust/source/anchors/proventa-etcd-root-ca.pem
+          mode: 0644
+          contents:
+            local: certs/proventa-etcd-root-ca.pem
+
+        - path: /usr/local/bin/generate-client-cert.sh
+          mode: 0755
+          contents:
+            local: scripts/generate-client-cert.sh
+
+        - path: /usr/local/share/prometheus.yml
+          mode: 0644
+          contents:
+            local: tmp/prometheus.yml
