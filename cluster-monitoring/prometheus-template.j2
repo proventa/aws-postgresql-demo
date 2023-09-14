@@ -11,9 +11,9 @@ scrape_configs:
     labels:
       group: 'postgres'
   tls_config:
-    ca_file: "/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem"
-    cert_file: "/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem"
-    key_file: "/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem"
+    ca_file: "/etc/ssl/self-certs/proventa-root-ca.pem"
+    cert_file: "/etc/ssl/self-certs/proventa-client-cert.pem"
+    key_file: "/etc/ssl/self-certs/proventa-client-cert-key.pem"
     insecure_skip_verify: false
   scheme: https
 - job_name: 'pgbouncer-exporter'
@@ -22,8 +22,19 @@ scrape_configs:
     labels:
       group: 'pgbouncer'
   tls_config:
-    ca_file: "/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem"
-    cert_file: "/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem"
-    key_file: "/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem"
+    ca_file: "/etc/ssl/self-certs/proventa-root-ca.pem"
+    cert_file: "/etc/ssl/self-certs/proventa-client-cert.pem"
+    key_file: "/etc/ssl/self-certs/proventa-client-cert-key.pem"
+    insecure_skip_verify: false
+  scheme: https
+- job_name: 'patroni'
+  static_configs:
+  - targets: [{% for ip in private_ips %}'{{ ip }}:8008'{% if not loop.last %},{% endif %}{% endfor %}]
+    labels:
+      group: 'patroni'
+  tls_config:
+    ca_file: "/etc/ssl/self-certs/proventa-root-ca.pem"
+    cert_file: "/etc/ssl/self-certs/proventa-client-cert.pem"
+    key_file: "/etc/ssl/self-certs/proventa-client-cert-key.pem"
     insecure_skip_verify: false
   scheme: https
