@@ -25,7 +25,7 @@
 
     - include_tasks: ../keys_and_certs-task.yml
 
-    - name: Create IAM Role for Patroni WAL
+    - name: Create IAM Role for etcd Role
       community.aws.iam_role:
         name: etcdRole
         state: present
@@ -36,7 +36,7 @@
           env: demo
       register: iam_role
 
-    - name: Create instance profile for Patroni WAL
+    - name: Create instance profile for etcd Role
       amazon.aws.iam_instance_profile:
         name: etcdInstanceProfile
         state: present
@@ -47,7 +47,7 @@
           env: demo
       register: iam_instance_profile
     
-    - name: Attach S3 Policy to Patroni WAL Role
+    - name: Attach S3 Policy to etcd Role
       amazon.aws.iam_policy:
         policy_name: etcdRolePolicy
         iam_type: role
