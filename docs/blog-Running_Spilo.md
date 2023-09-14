@@ -39,20 +39,20 @@ storage:
           contents:
             local: tmp/patroni-env
 
-        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+        - path: /etc/ssl/self-certs/proventa-root-ca.pem
           mode: 0644
           contents:
-            local: certs/proventa-etcd-root-ca.pem
+            local: certs/proventa-root-ca.pem
 
-        - path: /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+        - path: /etc/ssl/self-certs/proventa-gencert-config.json
           mode: 0644
           contents:
-            local: certs/proventa-etcd-gencert-config.json
+            local: certs/proventa-gencert-config.json
 
-        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem
+        - path: /etc/ssl/self-certs/proventa-root-ca-key.pem
           mode: 0644
           contents:
-            local: certs/proventa-etcd-root-ca-key.pem
+            local: certs/proventa-root-ca-key.pem
 
         - path: /usr/local/bin/generate-client-cert.sh
           mode: 0755
@@ -63,9 +63,9 @@ storage:
 Here we are attaching the following files from the local machine to the EC2 instances:
 
 * `/etc/patroni-env`: This file contains the environment variables that will be used by the Spilo container.
-* `/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem`: This file contains the root CA certificate of the etcd cluster.
-* `/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json`: This file contains the configuration for generating the client certificate for the Spilo container.
-* `/etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem`: This file contains the private key of the root CA certificate of the etcd cluster.
+* `/etc/ssl/self-certs/proventa-root-ca.pem`: This file contains the root CA certificate of the etcd cluster.
+* `/etc/ssl/self-certs/proventa-gencert-config.json`: This file contains the configuration for generating the client certificate for the Spilo container.
+* `/etc/ssl/self-certs/proventa-root-ca-key.pem`: This file contains the private key of the root CA certificate of the etcd cluster.
 * `/usr/local/bin/generate-client-cert.sh`: This file contains the script that will be used to generate the client certificate for the Spilo container.
 
 For more detailed information about the files, please visit our [Github repository](https://github.com/proventa/aws-postgresql-demo/blob/main/scripts/generate-client-cert.sh).
@@ -101,14 +101,14 @@ systemd:
             --net=host \
             --name patroni-container \
             --volume ${HOME}/patroni:/home/postgres/pgdata \
-            --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
+            --volume /etc/ssl/self-certs:/etc/ssl/self-certs \
             --env SCOPE=superman \
             --env PGVERSION=15 \
             --env ETCD3_PROTOCOL="https" \
             --env ETCD3_HOSTS="${ETCD_HOSTS}" \
-            --env ETCD3_CACERT="/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem" \
-            --env ETCD3_CERT="/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem" \
-            --env ETCD3_KEY="/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem" \
+            --env ETCD3_CACERT="/etc/ssl/self-certs/proventa-root-ca.pem" \
+            --env ETCD3_CERT="/etc/ssl/self-certs/proventa-client-cert.pem" \
+            --env ETCD3_KEY="/etc/ssl/self-certs/proventa-client-cert-key.pem" \
             ghcr.io/zalando/spilo-15:3.0-p1
 
           ExecStop=/usr/bin/podman rm -f patroni-container
@@ -121,7 +121,7 @@ Here we are creating a systemd unit file for the Spilo container. The unit file 
 
 `--volume ${HOME}/patroni:/home/postgres/pgdata`: This is the path to the directory that will be used to store the data of the PostgreSQL cluster. By default the data is stored in `/home/postgres/pgdata` inside the container. We will mount this directory to the `${HOME}/patroni` directory on the host machine. Another use case where this can be useful is when you want to use an additional or external EBS volume to store the data of the PostgreSQL cluster. The volumes can then be configured so that the data is not lost when the EC2 instance is terminated.
 
-`--volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs`: This is the path to the directory that contains the certificates of the etcd cluster.
+`--volume /etc/ssl/self-certs:/etc/ssl/self-certs`: This is the path to the directory that contains the certificates of the etcd cluster.
 
 `--env SCOPE=superman`: This is the name of the cluster. This name will be used to identify the Patroni cluster in the etcd cluster.
 
@@ -131,11 +131,11 @@ Here we are creating a systemd unit file for the Spilo container. The unit file 
 
 `--env ETCD3_HOSTS="${ETCD_HOSTS}"`: This is the list of etcd hosts that will be used by the Patroni cluster. The list of hosts is stored in the `ETCD_HOSTS` environment variable.
 
-`--env ETCD3_CACERT="/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem"`: This is the path to the root CA certificate of the etcd cluster.
+`--env ETCD3_CACERT="/etc/ssl/self-certs/proventa-root-ca.pem"`: This is the path to the root CA certificate of the etcd cluster.
 
-`--env ETCD3_CERT="/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem"`: This is the path to the client certificate.
+`--env ETCD3_CERT="/etc/ssl/self-certs/proventa-client-cert.pem"`: This is the path to the client certificate.
 
-`--env ETCD3_KEY="/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem"`: This is the path to the private key of the client certificate.
+`--env ETCD3_KEY="/etc/ssl/self-certs/proventa-client-cert-key.pem"`: This is the path to the private key of the client certificate.
 
 `ghcr.io/zalando/spilo-15:3.0-p1`: This is the name of the Spilo image that will be used to run the Spilo container. In this case we are using the spilo-15 image version 3.0-p1.
 

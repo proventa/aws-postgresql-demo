@@ -161,15 +161,15 @@ ExecStart=/usr/bin/podman \
     --rm \
     --net=host \
     --name patroni-container \
-    --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
+    --volume /etc/ssl/self-certs:/etc/ssl/self-certs \
     --volume ${HOME}/patroni:/home/postgres/pgdata \
     --env SCOPE=superman \
     --env PGVERSION=15 \
     --env ETCD3_PROTOCOL="https" \
     --env ETCD3_HOSTS="${ETCD_HOSTS}" \
-    --env ETCD3_CACERT="/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem" \
-    --env ETCD3_CERT="/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem" \
-    --env ETCD3_KEY="/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem" \
+    --env ETCD3_CACERT="/etc/ssl/self-certs/proventa-root-ca.pem" \
+    --env ETCD3_CERT="/etc/ssl/self-certs/proventa-client-cert.pem" \
+    --env ETCD3_KEY="/etc/ssl/self-certs/proventa-client-cert-key.pem" \
     --env AWS_REGION="eu-central-1" \ # The region in which the S3 bucket is located
     --env WAL_S3_BUCKET="patroni-demo-bucket" \ # The name of the S3 bucket
     --env AWS_ROLE_ARN="${AWS_ROLE_ARN}" \ # The ARN of the IAM Role

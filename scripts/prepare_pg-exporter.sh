@@ -2,10 +2,10 @@
 
 cat > /usr/local/share/web-config.yml <<EOF
 tls_server_config:
-    cert_file: /etc/ssl/etcd-certs/proventa-etcd-client-cert.pem
-    key_file: /etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem
+    cert_file: /etc/ssl/self-certs/proventa-client-cert.pem
+    key_file: /etc/ssl/self-certs/proventa-client-cert-key.pem
     client_auth_type: "RequireAndVerifyClientCert"
-    client_ca_file: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+    client_ca_file: /etc/ssl/self-certs/proventa-root-ca.pem
 EOF
 
 chmod 644 /usr/local/share/web-config.yml

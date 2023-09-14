@@ -31,20 +31,20 @@ We can create one or more users under ```passwd.users```. In this case, we have 
 ```yaml
 storage:
   files:
-        - path: /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+        - path: /etc/ssl/self-certs/proventa-gencert-config.json
           mode: 0644
           contents:
-            local: certs/proventa-etcd-gencert-config.json
+            local: certs/proventa-gencert-config.json
 
-        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem
+        - path: /etc/ssl/self-certs/proventa-root-ca-key.pem
           mode: 0644
           contents:
-            local: certs/proventa-etcd-root-ca-key.pem
+            local: certs/proventa-root-ca-key.pem
 
-        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+        - path: /etc/ssl/self-certs/proventa-root-ca.pem
           mode: 0644
           contents:
-            local: certs/proventa-etcd-root-ca.pem
+            local: certs/proventa-root-ca.pem
 
         - path: /usr/local/bin/etcd-discovery-cluster.txt
           mode: 0644
@@ -70,8 +70,8 @@ systemd:
         Description=etcd with Podman
         Documentation=https://github.com/coreos/etcd
 
-        ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
-        ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+        ConditionPathExists=/etc/ssl/self-certs/proventa-root-ca.pem
+        ConditionFileNotEmpty=/etc/ssl/self-certs/proventa-root-ca.pem
 
         After=setup-network-environment.service
         Requires=setup-network-environment.service
@@ -94,7 +94,7 @@ systemd:
           --net=host \
           --name etcd-container \
           --volume=${HOME}/etcd-data:/etcd-data \
-          --volume=/etc/ssl/etcd-certs/:/etcd-certs \
+          --volume=/etc/ssl/self-certs:/self-certs \
           gcr.io/etcd-development/etcd:v3.5.9 \
           /usr/local/bin/etcd \
           --name etcd-${DEFAULT_IPV4} \
@@ -104,13 +104,13 @@ systemd:
           --listen-peer-urls https://${DEFAULT_IPV4}:2380 \
           --initial-advertise-peer-urls https://${DEFAULT_IPV4}:2380 \
           --client-cert-auth \
-          --cert-file /etcd-certs/proventa-etcd-client-cert.pem \
-          --key-file /etcd-certs/proventa-etcd-client-cert-key.pem \
-          --trusted-ca-file /etcd-certs/proventa-etcd-root-ca.pem \
+          --cert-file /self-certs/proventa-client-cert.pem \
+          --key-file /self-certs/proventa-client-cert-key.pem \
+          --trusted-ca-file /self-certs/proventa-root-ca.pem \
           --peer-client-cert-auth \
-          --peer-cert-file /etcd-certs/proventa-etcd-client-cert.pem \
-          --peer-key-file /etcd-certs/proventa-etcd-client-cert-key.pem \
-          --peer-trusted-ca-file /etcd-certs/proventa-etcd-root-ca.pem \
+          --peer-cert-file /self-certs/proventa-client-cert.pem \
+          --peer-key-file /self-certs/proventa-client-cert-key.pem \
+          --peer-trusted-ca-file /self-certs/proventa-root-ca.pem \
           --discovery=${ETCD_DISCOVERY_ADDR}
 
         ExecStop=/usr/bin/podman rm -f etcd-container
@@ -209,8 +209,8 @@ ENDPOINTS=$(podman exec etcd-container etcdctl member list | awk -F ', ' '{print
 
 Then we can check the status and the health of the etcd cluster by running the following command:
 ```bash
-podman exec -it etcd-container etcdctl --write-out=table --cacert="/etcd-certs/proventa-etcd-root-ca.pem"  --endpoints=$ENDPOINTS --cert="/etcd-certs/proventa-etcd-client-cert.pem" --key="/etcd-certs/proventa-etcd-client-cert-key.pem" endpoint status
-podman exec -it etcd-container etcdctl --write-out=table --cacert="/etcd-certs/proventa-etcd-root-ca.pem"  --endpoints=$ENDPOINTS --cert="/etcd-certs/proventa-etcd-client-cert.pem" --key="/etcd-certs/proventa-etcd-client-cert-key.pem" endpoint health
+podman exec -it etcd-container etcdctl --write-out=table --cacert="/self-certs/proventa-root-ca.pem"  --endpoints=$ENDPOINTS --cert="/self-certs/proventa-client-cert.pem" --key="/self-certs/proventa-client-cert-key.pem" endpoint status
+podman exec -it etcd-container etcdctl --write-out=table --cacert="/self-certs/proventa-root-ca.pem"  --endpoints=$ENDPOINTS --cert="/self-certs/proventa-client-cert.pem" --key="/self-certs/proventa-client-cert-key.pem" endpoint health
 ```
 
 The output should look like this:

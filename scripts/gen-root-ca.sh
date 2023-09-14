@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# If proventa-etcd-root-ca.pem and proventa-etcd-root-ca-key.pem already exist, then skip this step
-if [ -f ../certs/proventa-etcd-root-ca.pem ] && [ -f ../certs/proventa-etcd-root-ca-key.pem ]; then
+# If proventa-root-ca.pem and proventa-root-ca-key.pem already exist, then skip this step
+if [ -f ../certs/proventa-root-ca.pem ] && [ -f ../certs/proventa-root-ca-key.pem ]; then
   echo "Root CA already exists. Skipping root CA generation."
   exit 0
 fi
@@ -19,7 +19,7 @@ curl -L https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -o ../bin/cfssljson
 chmod +x ../bin/cfssljson
 
 # Generate root CA certificate bundle (Public Certificate and Private Key)
-cat > ../certs/proventa-etcd-root-ca-csr.json <<EOF
+cat > ../certs/proventa-root-ca-csr.json <<EOF
 {
   "key": {
     "algo": "rsa",
@@ -34,13 +34,13 @@ cat > ../certs/proventa-etcd-root-ca-csr.json <<EOF
       "C": "Germany"
     }
   ],
-  "CN": "proventa-etcd-root-ca"
+  "CN": "proventa-root-ca"
 }
 EOF
 
-./../bin/cfssl gencert --initca=true ../certs/proventa-etcd-root-ca-csr.json | ./../bin/cfssljson --bare ../certs/proventa-etcd-root-ca
+./../bin/cfssl gencert --initca=true ../certs/proventa-root-ca-csr.json | ./../bin/cfssljson --bare ../certs/proventa-root-ca
 
-cat > ../certs/proventa-etcd-gencert-config.json <<EOF
+cat > ../certs/proventa-gencert-config.json <<EOF
 {
   "signing": {
     "default": {

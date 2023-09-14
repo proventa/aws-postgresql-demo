@@ -126,9 +126,9 @@ ENDPOINTS=$(podman exec etcd-container etcdctl member list | awk -F ', ' '{print
 
 Then we can check the status and the health of the etcd cluster by running the following command:
 ```bash
-podman exec -it etcd-container etcdctl --write-out=table --cacert="/etcd-certs/proventa-etcd-root-ca.pem"  --endpoints=$ENDPOINTS --cert="/etcd-certs/proventa-etcd-client-cert.pem" --key="/etcd-certs/proventa-etcd-client-cert-key.pem" endpoint status
+podman exec -it etcd-container etcdctl --write-out=table --cacert="/self-certs/proventa-root-ca.pem"  --endpoints=$ENDPOINTS --cert="/self-certs/proventa-client-cert.pem" --key="/self-certs/proventa-client-cert-key.pem" endpoint status
 
-podman exec -it etcd-container etcdctl --write-out=table --cacert="/etcd-certs/proventa-etcd-root-ca.pem"  --endpoints=$ENDPOINTS --cert="/etcd-certs/proventa-etcd-client-cert.pem" --key="/etcd-certs/proventa-etcd-client-cert-key.pem" endpoint health
+podman exec -it etcd-container etcdctl --write-out=table --cacert="/self-certs/proventa-root-ca.pem"  --endpoints=$ENDPOINTS --cert="/self-certs/proventa-client-cert.pem" --key="/self-certs/proventa-client-cert-key.pem" endpoint health
 ```
 
 The output should look like this:

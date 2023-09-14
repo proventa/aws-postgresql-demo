@@ -12,7 +12,7 @@ export PATH=$PATH:~/bin
 
 ip_address=$(hostname -I | awk '{print $1}')
 
-cat > /etc/ssl/etcd-certs/proventa-etcd-client-cert-csr.json <<EOF
+cat > /etc/ssl/self-certs/proventa-client-cert-csr.json <<EOF
 {
   "key": {
     "algo": "rsa",
@@ -27,7 +27,7 @@ cat > /etc/ssl/etcd-certs/proventa-etcd-client-cert-csr.json <<EOF
       "C": "Germany"
     }
   ],
-  "CN": "proventa-etcd-client-cert",
+  "CN": "proventa-client-cert",
   "hosts": [
     "127.0.0.1",
     "localhost",
@@ -37,10 +37,10 @@ cat > /etc/ssl/etcd-certs/proventa-etcd-client-cert-csr.json <<EOF
 EOF
 
 cfssl gencert \
-  --ca /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem \
-  --ca-key /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem \
-  --config /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json \
-  /etc/ssl/etcd-certs/proventa-etcd-client-cert-csr.json | cfssljson --bare /etc/ssl/etcd-certs/proventa-etcd-client-cert
+  --ca /etc/ssl/self-certs/proventa-root-ca.pem \
+  --ca-key /etc/ssl/self-certs/proventa-root-ca-key.pem \
+  --config /etc/ssl/self-certs/proventa-gencert-config.json \
+  /etc/ssl/self-certs/proventa-client-cert-csr.json | cfssljson --bare /etc/ssl/self-certs/proventa-client-cert
 
-chmod 644 /etc/ssl/etcd-certs/proventa-etcd-client-cert.pem
-chmod 644 /etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem
+chmod 644 /etc/ssl/self-certs/proventa-client-cert.pem
+chmod 644 /etc/ssl/self-certs/proventa-client-cert-key.pem
