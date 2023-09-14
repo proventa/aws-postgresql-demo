@@ -138,7 +138,7 @@
         vpc_id: "{{ vpc_net.vpc.id }}"
         protocol: tcp
         port: 6432
-        health_check_protocol: http
+        health_check_protocol: https
         health_check_path: /
         health_check_port: 8008
         successful_response_codes: "200" # Only forward the traffic to the master node
