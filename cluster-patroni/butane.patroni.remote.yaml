@@ -16,8 +16,8 @@ systemd:
           [Unit]
           Description=Preparing Fedora CoreOS for Patroni. Turning SELinux to Permissive, and creating client certs
 
-          ConditionPathExists=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
-          ConditionFileNotEmpty=/etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+          ConditionPathExists=/etc/ssl/self-certs/proventa-gencert-config.json
+          ConditionFileNotEmpty=/etc/ssl/self-certs/proventa-gencert-config.json
 
           Requires=network-online.target
           After=network-online.target
@@ -26,7 +26,7 @@ systemd:
           ExecStartPre=/usr/sbin/setenforce 0
           ExecStartPre=/usr/bin/sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
           ExecStart=/usr/local/bin/generate-client-cert.sh
-          ExecStartPost=/usr/bin/cp /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem /etc/pki/ca-trust/source/anchors/
+          ExecStartPost=/usr/bin/cp /etc/ssl/self-certs/proventa-root-ca.pem /etc/pki/ca-trust/source/anchors/
           ExecStartPost=/usr/bin/update-ca-trust
           
           RemainAfterExit=yes
@@ -57,20 +57,25 @@ systemd:
           ExecStartPre=/usr/bin/loginctl enable-linger patroni-user
           ExecStartPre=/usr/bin/mkdir -p ${HOME}/patroni
           ExecStartPre=/usr/bin/podman rm -f patroni-container
+          ExecStartPre=/usr/local/bin/prepare-certs.sh
           ExecStart=/usr/bin/podman \
             run \
             --rm \
             --net=host \
             --name patroni-container \
-            --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
+            --volume /etc/ssl/self-certs:/etc/ssl/self-certs \
+            --volume patroni-certs:/etc/ssl/patroni-certs \
             --volume ${HOME}/patroni:/home/postgres/pgdata \
-            --env SCOPE=batman \
+            --env SCOPE=superman \
             --env PGVERSION=15 \
             --env ETCD3_PROTOCOL="https" \
             --env ETCD3_HOSTS="${ETCD_HOSTS}" \
-            --env ETCD3_CACERT="/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem" \
-            --env ETCD3_CERT="/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem" \
-            --env ETCD3_KEY="/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem" \
+            --env ETCD3_CACERT="/etc/ssl/self-certs/proventa-root-ca.pem" \
+            --env ETCD3_CERT="/etc/ssl/self-certs/proventa-client-cert.pem" \
+            --env ETCD3_KEY="/etc/ssl/self-certs/proventa-client-cert-key.pem" \
+            --env SSL_RESTAPI_CA_FILE="/etc/ssl/self-certs/proventa-root-ca.pem" \
+            --env SSL_RESTAPI_CERTIFICATE_FILE="/etc/ssl/self-certs/proventa-client-cert.pem" \
+            --env SSL_RESTAPI_PRIVATE_KEY_FILE="/etc/ssl/self-certs/proventa-client-cert-key.pem" \
             --env WAL_S3_REGION="eu-central-1" \
             --env AWS_REGION="eu-central-1" \
             --env WAL_S3_BUCKET="patroni-demo-bucket" \
@@ -132,20 +137,21 @@ systemd:
             --rm \
             --net=host \
             --name pgbouncer-container \
-            --volume /etc/ssl/etcd-certs:/opt/bitnami/pgbouncer/certs \
+            --volume /etc/ssl/self-certs:/opt/bitnami/pgbouncer/certs \
+            --volume /usr/local/share/userlist.txt:/opt/bitnami/pgbouncer/userlist.txt \
             --env DB_HOST="localhost" \
             --env DB_NAME="postgres" \
             --env DB_PORT="5432" \
             --env AUTH_USER="pgbouncer" \
-            --env AUTH_FILE="/opt/bitnami/pgbouncer/certs/userlist.txt" \
+            --env AUTH_FILE="/opt/bitnami/pgbouncer/userlist.txt" \
             --env AUTH_QUERY="SELECT username, password FROM pgbouncer.get_auth($1)" \
             --env AUTH_TYPE="scram-sha-256" \
             --env STATS_USERS="stats_collector" \
             --env LISTEN_PORT="6432" \
             --env CLIENT_TLS_SSLMODE="require" \
-            --env CLIENT_TLS_KEY_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-client-cert-key.pem" \
-            --env CLIENT_TLS_CERT_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-client-cert.pem" \
-            --env CLIENT_TLS_CA_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-root-ca.pem" \
+            --env CLIENT_TLS_KEY_FILE="/opt/bitnami/pgbouncer/certs/proventa-client-cert-key.pem" \
+            --env CLIENT_TLS_CERT_FILE="/opt/bitnami/pgbouncer/certs/proventa-client-cert.pem" \
+            --env CLIENT_TLS_CA_FILE="/opt/bitnami/pgbouncer/certs/proventa-root-ca.pem" \
             docker.io/edoburu/pgbouncer:1.20.1-p0
 
           ExecStop=/usr/bin/podman rm -f pgbouncer-container
@@ -173,7 +179,7 @@ systemd:
             --rm \
             --name pg-exporter-container \
             --net=host \
-            --volume=/etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
+            --volume=/etc/ssl/self-certs:/etc/ssl/self-certs \
             --volume=/usr/local/share/web-config.yml:/etc/web-config.yml \
             --env DATA_SOURCE_URI="localhost:5432" \
             --env DATA_SOURCE_USER="postgres" \
@@ -206,7 +212,7 @@ systemd:
             --rm \
             --name pgbouncer-exporter-container \
             --net=host \
-            --volume=/etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
+            --volume=/etc/ssl/self-certs:/etc/ssl/self-certs \
             --volume=/usr/local/share/web-config.yml:/etc/web-config.yml \
             docker.io/prometheuscommunity/pgbouncer-exporter \
               --web.config.file=/etc/web-config.yml \
@@ -224,20 +230,20 @@ storage:
           contents:
             local: tmp/patroni-env
 
-        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+        - path: /etc/ssl/self-certs/proventa-root-ca.pem
           mode: 0644
           contents:
-            local: certs/proventa-etcd-root-ca.pem
+            local: certs/proventa-root-ca.pem
 
-        - path: /etc/ssl/etcd-certs/proventa-etcd-gencert-config.json
+        - path: /etc/ssl/self-certs/proventa-gencert-config.json
           mode: 0644
           contents:
-            local: certs/proventa-etcd-gencert-config.json
+            local: certs/proventa-gencert-config.json
 
-        - path: /etc/ssl/etcd-certs/proventa-etcd-root-ca-key.pem
+        - path: /etc/ssl/self-certs/proventa-root-ca-key.pem
           mode: 0644
           contents:
-            local: certs/proventa-etcd-root-ca-key.pem
+            local: certs/proventa-root-ca-key.pem
 
         - path: /usr/local/bin/generate-client-cert.sh
           mode: 0755
@@ -249,7 +255,7 @@ storage:
           contents:
             local: scripts/prepare_pgbouncer_auth.sh
 
-        - path: /etc/ssl/etcd-certs/userlist.txt
+        - path: /usr/local/share/userlist.txt
           mode: 0644
           contents:
             local: tmp/userlist.txt
@@ -259,12 +265,34 @@ storage:
           contents:
             inline: |
               tls_server_config:
-                cert_file: /etc/ssl/etcd-certs/proventa-etcd-client-cert.pem
-                key_file: /etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem
+                cert_file: /etc/ssl/self-certs/proventa-client-cert.pem
+                key_file: /etc/ssl/self-certs/proventa-client-cert-key.pem
                 client_auth_type: "RequireAndVerifyClientCert"
-                client_ca_file: /etc/ssl/etcd-certs/proventa-etcd-root-ca.pem
+                client_ca_file: /etc/ssl/self-certs/proventa-root-ca.pem
 
         - path: /usr/local/share/postgres_exporter.yml
           mode: 0644
           contents:
             local: cluster-patroni/postgres_exporter.yml
+
+        - path: /usr/local/bin/prepare-certs.sh
+          mode: 0755
+          contents:
+            inline: |
+              #!/bin/bash
+
+              set -e
+
+              # Delete patroni-certs volume if exists
+              podman volume rm -f patroni-certs || true
+
+              # Create patroni-certs volume
+              podman volume create patroni-certs
+
+              # Copy certs to patroni-certs volume
+              cp /etc/ssl/self-certs/proventa-client-cert-key.pem $HOME/.local/share/containers/storage/volumes/patroni-certs/_data/proventa-client-cert-key.pem
+              cp /etc/ssl/self-certs/proventa-client-cert.pem $HOME/.local/share/containers/storage/volumes/patroni-certs/_data/proventa-client-cert.pem
+              cp /etc/ssl/self-certs/proventa-root-ca.pem $HOME/.local/share/containers/storage/volumes/patroni-certs/_data/proventa-root-ca.pem
+
+              # Change permissions
+              chmod 640 $HOME/.local/share/containers/storage/volumes/patroni-certs/_data/proventa-client-cert-key.pem
