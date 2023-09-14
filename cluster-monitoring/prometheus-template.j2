@@ -16,3 +16,14 @@ scrape_configs:
     key_file: "/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem"
     insecure_skip_verify: false
   scheme: https
+- job_name: 'pgbouncer-exporter'
+  static_configs:
+  - targets: [{% for ip in private_ips %}'{{ ip }}:9127'{% if not loop.last %},{% endif %}{% endfor %}]
+    labels:
+      group: 'pgbouncer'
+  tls_config:
+    ca_file: "/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem"
+    cert_file: "/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem"
+    key_file: "/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem"
+    insecure_skip_verify: false
+  scheme: https
