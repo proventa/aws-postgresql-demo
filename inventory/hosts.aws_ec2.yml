@@ -5,3 +5,6 @@ strict: False
 keyed_groups:
   - prefix: tag
     key: tags
+# Collect the private ip4 addresses of the instances
+hostnames:
+  - private-ip-address
