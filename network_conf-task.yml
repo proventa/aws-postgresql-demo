@@ -93,9 +93,13 @@
           - 8008
         cidr_ip: "10.0.3.0/24"
       - proto: tcp # patroni <-> etcd communication
-        from_port: 2379
-        to_port: 2380
+        ports:
+          - 2379
         cidr_ip: "10.0.2.0/24"
+      - proto: tcp # monitoring <-> etcd communication
+        ports:
+          - 2379
+        cidr_ip: "10.0.3.0/24"
       - proto: tcp # Allow PostgreSQL connections within Patroni subnet
         ports:
           - 5432
