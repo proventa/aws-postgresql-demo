@@ -185,7 +185,9 @@ systemd:
             --env DATA_SOURCE_USER="postgres" \
             --env DATA_SOURCE_PASS="zalando" \
             quay.io/prometheuscommunity/postgres-exporter \
-              --web.config.file=/etc/web-config.yml
+              --web.config.file=/etc/web-config.yml \
+              --collector.process_idle \
+              --collector.postmaster
 
           ExecStop=/usr/bin/podman rm -f pg-exporter-container
 
