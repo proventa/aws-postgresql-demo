@@ -13,6 +13,7 @@
     patroni_tags:
       cluster: patroni
       env: demo
+    grafana_password: "grafana"
   tasks:
     - name: Prepare all folders needed
       ansible.builtin.file:
@@ -94,3 +95,77 @@
         user_data: "{{ lookup('file', '../tmp/monitoring.ign')|string }}"
         iam_instance_profile: "{{ iam_instance_profile.iam_instance_profile.instance_profile_name }}"
       register: ec2_instance
+
+    - name: Create public ip list
+      set_fact:
+        monitoring_public_ip: "{{ ec2_instance.instances | map(attribute='public_ip_address') | list }}"
+
+    - name: Pause for 30 seconds to let Grafana boot
+      ansible.builtin.pause:
+        seconds: 30
+
+    - name: Check whether Grafana is alive
+      uri:
+        url: "http://{{ item }}:3000/api/health"
+      register: grafana_response
+      with_items: "{{ monitoring_public_ip }}"
+      retries: 60
+      delay: 5
+      until: grafana_response.status == 200
+      ignore_errors: yes
+
+    - name: create prometheus datasource
+      community.grafana.grafana_datasource:
+        grafana_url: http://{{ item }}:3000/
+        grafana_user: "admin"
+        grafana_password: "{{ grafana_password }}"
+        state: present
+        name: Prometheus
+        ds_type: prometheus
+        ds_url: http://localhost:9090
+        is_default: true
+      with_items: "{{ monitoring_public_ip }}"
+
+    - name: Import etcd Grafana dashboards
+      community.grafana.grafana_dashboard:
+        grafana_url: "http://{{ item }}:3000/"
+        grafana_user: "admin"
+        grafana_password: "{{ grafana_password }}"
+        state: present
+        commit_message: Updated by ansible
+        overwrite: yes
+        path: "../grafana-dashboards/etcd.json"
+      with_items: "{{ monitoring_public_ip }}"
+
+    - name: Import Patroni Grafana dashboards
+      community.grafana.grafana_dashboard:
+        grafana_url: "http://{{ item }}:3000/"
+        grafana_user: "admin"
+        grafana_password: "{{ grafana_password }}"
+        state: present
+        commit_message: Updated by ansible
+        overwrite: yes
+        path: "../grafana-dashboards/patroni.json"
+      with_items: "{{ monitoring_public_ip }}"
+
+    - name: Import Pgbouncer Grafana dashboards
+      community.grafana.grafana_dashboard:
+        grafana_url: "http://{{ item }}:3000/"
+        grafana_user: "admin"
+        grafana_password: "{{ grafana_password }}"
+        state: present
+        commit_message: Updated by ansible
+        overwrite: yes
+        path: "../grafana-dashboards/pgbouncer.json"
+      with_items: "{{ monitoring_public_ip }}"
+
+    - name: Import Postgres Grafana dashboards
+      community.grafana.grafana_dashboard:
+        grafana_url: "http://{{ item }}:3000/"
+        grafana_user: "admin"
+        grafana_password: "{{ grafana_password }}"
+        state: present
+        commit_message: Updated by ansible
+        overwrite: yes
+        path: "../grafana-dashboards/postgres.json"
+      with_items: "{{ monitoring_public_ip }}"
