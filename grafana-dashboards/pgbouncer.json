@@ -456,7 +456,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "sort_desc( sum ( rate(pgbouncer_stats_queries_duration_seconds_total{database=\"$db\"}[30m]) ) )",
+          "expr": "sort_desc( sum ( rate(pgbouncer_stats_queries_duration_seconds_total[30m]) ) )",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
