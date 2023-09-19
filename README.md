@@ -199,10 +199,10 @@ patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com
 Now, we can connect to the PostgreSQL cluster using `postgres` as the username and `zalando` (default password) as the password by running the following command:
 
 ```bash
-psql -h patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com -U postgres
+psql -h patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com -U postgres -p 6432
 ```
 
-And voila! We are connected to the PostgreSQL cluster.
+And voila! We are connected to the PostgreSQL cluster. Notice that we are using port 6432 since we are using PgBouncer to connect to the PostgreSQL cluster.
 
 ### Verifying the WAL-G backups in S3 bucket
 
@@ -235,3 +235,30 @@ The output should look like this:
 
 The output shows that the WAL-G backups are working fine and the backups are being uploaded to the S3 bucket.
 
+### Verifying the Monitoring (Prometheus and Grafana) cluster
+
+To verify the Monitoring cluster, we need to get the IP address of the instance running Prometheus and Grafana. We can do that by running the following command:
+
+```bash
+aws ec2 describe-instances --filters "Name=tag:cluster,Values=monitoring" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text
+```
+
+The output should look like this:
+
+```
+18.197.188.5
+```
+
+Now, we can access the Grafana dashboard by opening the following URL in the browser:
+
+```
+http://18.197.188.5:3000
+```
+
+The default username and password for the Grafana UI is `admin` and `grafana`. Once you are logged in, you can navigate to the `Dashboards` section. There you would find 4 dashboards:
+- Etcd by Prometheus
+- PgBouncer
+- PostgreSQL Database
+- PostgreSQL Patroni
+
+You can navigate to each of the dashboards and see the metrics.
