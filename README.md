@@ -16,6 +16,7 @@ This repository hosts the concept of running a containerized and highly availabl
     - [Verifying the PostgreSQL cluster](#verifying-the-postgresql-cluster)
     - [Connecting to the PostgreSQL cluster](#connecting-to-the-postgresql-cluster)
     - [Verifying the WAL-G backups in S3 bucket](#verifying-the-wal-g-backups-in-s3-bucket)
+    - [Verifying the Monitoring (Prometheus and Grafana) cluster](#verifying-the-monitoring-prometheus-and-grafana-cluster)
 
 ## Components used in this demo
 
