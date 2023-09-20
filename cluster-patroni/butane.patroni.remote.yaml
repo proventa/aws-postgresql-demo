@@ -76,7 +76,6 @@ systemd:
             --env SSL_RESTAPI_CA_FILE="/etc/ssl/self-certs/proventa-root-ca.pem" \
             --env SSL_RESTAPI_CERTIFICATE_FILE="/etc/ssl/self-certs/proventa-client-cert.pem" \
             --env SSL_RESTAPI_PRIVATE_KEY_FILE="/etc/ssl/self-certs/proventa-client-cert-key.pem" \
-            --env WAL_S3_REGION="eu-central-1" \
             --env AWS_REGION="eu-central-1" \
             --env WAL_S3_BUCKET="patroni-demo-bucket" \
             --env AWS_ROLE_ARN="${AWS_ROLE_ARN}" \
@@ -90,38 +89,11 @@ systemd:
           [Install]
           WantedBy=multi-user.target
 
-      - name: secret.service
-        enabled: true
-        contents: |
-          [Unit]
-          Description= Creating Podman secrets for PGBouncer
-
-          ConditionPathExists=/var/tmp/.secretfile
-          ConditionFileNotEmpty=/var/tmp/.secretfile
-
-          Requires=patroni.service
-          After=patroni.service
-
-          [Service]
-          User=patroni-user
-
-          ExecStartPre=-/usr/bin/podman secret rm pgbouncer-password
-          ExecStart=/usr/bin/podman secret create pgbouncer-password /var/tmp/.secretfile
-          ExecStartPost=/usr/bin/rm -f /var/tmp/.secretfile
-
-          RemainAfterExit=yes
-          Type=oneshot
-
-          [Install]
-          WantedBy=multi-user.target
-
       - name: pgbouncer.service
         enabled: true
         contents: |
           [Unit]
-          Description=PGCat Connection pooling with Podman
-
-          After=secret.service
+          Description=PgBouncer Connection pooling with Podman
 
           [Service]
           User=patroni-user
