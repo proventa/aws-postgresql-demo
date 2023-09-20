@@ -68,6 +68,28 @@ The next step is to create a new IAM Role that will be used by the EC2 instances
 
 Notice that we are using the `assume_role_policy_document` parameter to specify on which resources the IAM Role can be assumed. In our case, we will be using the EC2 instances running the Spilo image. We are also using the `policy_json` parameter to specify the permissions that the IAM Role will have. In our case, we will be using the permissions provided by the `patroni-wal-role-policy.json` file. The permissions in the file are the minimum permissions required to access the S3 bucket. To get the details about the permissions, you can visit to our [GitHub repository](https://github.com/proventa/aws-postgresql-demo).
 
+After that we can use the `Instance Profile` to assign the IAM Role to the EC2 instances running the Spilo image. We can take the `Start Fedora CoreOS instances` task from the previous blog and update it to assign the IAM Role to the EC2 instances. Here is how the updated task should look like:
+
+```yaml
+- name: Start Fedora CoreOS instances
+    amazon.aws.ec2_instance:
+    state: running
+    instance_type: "{{ instance_type }}"
+    image_id: "{{ ami_id }}"
+    count: "{{ instance_count }}"
+    region: "{{ instance_region }}"
+    network:
+        assign_public_ip: true
+    security_group: "{{ sg.group_name }}"
+    vpc_subnet_id: "{{ patroni_subnet.subnet.id }}"
+    key_name: "{{ key_pair.key.name }}"
+    tags: "{{ ec2_tags }}"
+    user_data: "{{ lookup('file', '../tmp/patroni.ign')|string }}"
+    iam_instance_profile: "{{ iam_instance_profile.iam_instance_profile.instance_profile_name }}" # Assign the IAM Role to the EC2 instances
+    register: ec2_instance
+```
+
+
 ## Putting the S3 Bucket and Spilo Together
 
 Now, let's see how we can put the S3 bucket and Spilo together. We can take the systemd unit file from the [previous blog post](./blog-Running_Spilo.md) and modify it to include the S3 bucket. The modified systemd unit file should look like this:
