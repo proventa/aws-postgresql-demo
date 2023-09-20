@@ -16,12 +16,13 @@ This repository hosts the concept of running a containerized and highly availabl
     - [Verifying the PostgreSQL cluster](#verifying-the-postgresql-cluster)
     - [Connecting to the PostgreSQL cluster](#connecting-to-the-postgresql-cluster)
     - [Verifying the WAL-G backups in S3 bucket](#verifying-the-wal-g-backups-in-s3-bucket)
+    - [Verifying the Monitoring (Prometheus and Grafana) cluster](#verifying-the-monitoring-prometheus-and-grafana-cluster)
 
 ## Components used in this demo
 
 ![Architecture](docs/architecture.svg)
 
-The above diagram shows the concept in a rather pragmatic manner: On the left is 3-member  [etcd](https://github.com/coreos/etcd) HA-cluster. The middle consists of a 3-member PostgreSQL HA-cluster managed by [Patroni](https://github.com/zalando/patroni) using the [Spilo](https://github.com/zalando/spilo) image. On the right side shows one instance each running [Prometheus](https://github.com/prometheus/prometheus) and [Grafana](https://github.com/grafana/grafana). The communication between the PostgreSQL cluster and Prometheus is done via the [postgres_exporter](https://github.com/postgresml/pgcat). AWS [Network Load Balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html) is used to load balance the PostgreSQL cluster. The PostgreSQL cluster is backed up to an [S3 bucket](https://aws.amazon.com/s3/).
+The above diagram shows the concept in a rather pragmatic manner: On the left is 3-member  [etcd](https://github.com/coreos/etcd) HA-cluster. The middle consists of a 3-member PostgreSQL HA-cluster managed by [Patroni](https://github.com/zalando/patroni) using the [Spilo](https://github.com/zalando/spilo) image. On the right side shows one instance each running [Prometheus](https://github.com/prometheus/prometheus) and [Grafana](https://github.com/grafana/grafana). The communication between the PostgreSQL cluster and Prometheus is done via the [postgres_exporter](https://github.com/prometheus-community/postgres_exporter). AWS [Network Load Balancer](https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html) is used to load balance the PostgreSQL cluster. The PostgreSQL cluster is backed up to an [S3 bucket](https://aws.amazon.com/s3/).
 
 ## Getting Started
 
@@ -199,10 +200,10 @@ patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com
 Now, we can connect to the PostgreSQL cluster using `postgres` as the username and `zalando` (default password) as the password by running the following command:
 
 ```bash
-psql -h patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com -U postgres
+psql -h patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com -U postgres -p 6432
 ```
 
-And voila! We are connected to the PostgreSQL cluster.
+And voila! We are connected to the PostgreSQL cluster. Notice that we are using port 6432 since we are using PgBouncer to connect to the PostgreSQL cluster.
 
 ### Verifying the WAL-G backups in S3 bucket
 
@@ -235,3 +236,30 @@ The output should look like this:
 
 The output shows that the WAL-G backups are working fine and the backups are being uploaded to the S3 bucket.
 
+### Verifying the Monitoring (Prometheus and Grafana) cluster
+
+To verify the Monitoring cluster, we need to get the IP address of the instance running Prometheus and Grafana. We can do that by running the following command:
+
+```bash
+aws ec2 describe-instances --filters "Name=tag:cluster,Values=monitoring" --query 'Reservations[*].Instances[*].PublicIpAddress' --output text
+```
+
+The output should look like this:
+
+```
+18.197.188.5
+```
+
+Now, we can access the Grafana dashboard by opening the following URL in the browser:
+
+```
+http://18.197.188.5:3000
+```
+
+The default username and password for the Grafana UI is `admin` and `grafana`. Once you are logged in, you can navigate to the `Dashboards` section. There you would find 4 dashboards:
+- Etcd by Prometheus
+- PgBouncer
+- PostgreSQL Database
+- PostgreSQL Patroni
+
+You can navigate to each of the dashboards and see the metrics.
