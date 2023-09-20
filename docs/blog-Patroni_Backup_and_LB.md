@@ -2,7 +2,7 @@
 
 ![Patroni Load Balancing and S3 Backup](patroni-loadbalancing-s3.svg)
 
-In our [previous blog post](./blog-Running_Spilo.md), we embarked on a journey to set up a highly available PostgreSQL cluster managed by Patroni using the Spilo image. We saw how Patroni, in collaboration with an etcd cluster, elevates PostgreSQL to new heights of availability and failover automation. Building upon that, let's explore the next chapter in our journey: leveraging a network load balancer and an S3 bucket for a highly available PostgreSQL cluster.
+In our previous blog posts, [Setting up a highly available PostgreSQL Cluster with Patroni using Spilo Image](./blog-Running_Spilo.md) and [Setting up a Connection Pooler for PostgreSQL on EC2 Instances](./blog-ConnectionPooler.md), we embarked on a journey to set up a highly available PostgreSQL cluster managed by Patroni using the Spilo image and a connection pooler for PostgreSQL on EC2 instances. We saw how Patroni, in collaboration with an etcd cluster, elevates PostgreSQL to new heights of availability and failover automation. We also learned how PgBouncer can help us manage the connections to the PostgreSQL cluster. Building upon that, let's explore the next chapter in our journey: Leveraging a network load balancer and an S3 bucket for a highly available PostgreSQL cluster. 
 
 ## Why Load Balancing?
 
@@ -29,7 +29,7 @@ The first step is to create a new Target Group. The Target Group is a group of i
 ```yaml
 - name: Create target list
   set_fact:
-    target_list: "{{ target_list | default([]) + [{'Id': item, 'Port': 5432}] }}"
+    target_list: "{{ target_list | default([]) + [{'Id': item, 'Port': 6432}] }}"
     loop: "{{ ec2_instance.instance_ids }}" # The list of instance ids that will receive traffic from the load balancer
 
 - name: Ensure Target Group for Patroni cluster exist
@@ -38,7 +38,7 @@ The first step is to create a new Target Group. The Target Group is a group of i
     region: "{{ instance_region }}"
     vpc_id: "{{ vpc_net.vpc.id }}"
     protocol: tcp
-    port: 5432
+    port: 6432
     health_check_protocol: http
     health_check_path: /
     health_check_port: 8008
@@ -62,15 +62,15 @@ The next step is to create a new Load Balancer. We will create a new Load Balanc
     state: present
     listeners:
     - Protocol: TCP
-        Port: 5432
+        Port: 6432
         DefaultActions:
         - Type: forward
             TargetGroupArn: "{{ tg.target_group_arn  }}"
 ```
 
-In the `subnets` parameter, we specify the subnets in which the load balancer will be created. In our case, we will be using the subnet in which our PostgreSQL cluster is running. In the `listeners` parameter, we specify the port on which the load balancer will listen for incoming requests. In our case, we will be using port 5432, which is the default port for PostgreSQL. We also specify the Target Group that will receive the incoming requests. In our case, we will be using the Target Group `patroni-tg` that we created in the previous step.
+In the `subnets` parameter, we specify the subnets in which the load balancer will be created. In our case, we will be using the subnet in which our PostgreSQL cluster is running. In the `listeners` parameter, we specify the port on which the load balancer will listen for incoming requests. In our case, we will be using port 6432, which is the port for the PgBouncer. We also specify the Target Group that will receive the incoming requests. In our case, we will be using the Target Group `patroni-tg` that we created in the previous step.
 
-The load balancer will be assigned with a DNS name. Since we are assigning the load balancer in a public subnet, the DNS name will be publicly accessible. We can use the DNS name to connect to the PostgreSQL cluster. To get the DNS name of the load balancer, we can navigate to the AWS console and select the load balancer or we can use the following command on your terminal:
+The load balancer will be assigned with a DNS name. Since we are assigning the load balancer in a public subnet, the DNS name will be publicly accessible. We can use the DNS name to connect to the PostgreSQL cluster (through the PgBouncer). To get the DNS name of the load balancer, we can navigate to the AWS console and select the load balancer or we can use the following command on your terminal:
 
 ```bash
 aws elbv2 describe-load-balancers --names patroni-nlb --query 'LoadBalancers[*].DNSName' --output text
@@ -82,15 +82,13 @@ The output should look like this:
 patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com
 ```
 
-Now, we can connect to the PostgreSQL cluster using `postgres` as the username and `zalando` (default password) as the password by running the following command:
+Now, we can connect to the Postgres DB through the PgBouncer using `postgres` as the username and `zalando` (default password) as the password by running the following command:
 
 ```bash
-psql -h patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com -U postgres
+psql -h patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com -U postgres -p 6432
 ```
 
 And voila! We are connected to the PostgreSQL cluster.
-
-
 
 ## Setting up the S3 Bucket
 
