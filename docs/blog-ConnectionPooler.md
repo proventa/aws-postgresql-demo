@@ -12,7 +12,7 @@ Make sure you have followed the steps in our previous blog post, [Setting up a h
 
 Managing database connections can be resource-intensive. Each connection consumes memory and other resources on the database server. When your application requires numerous connections, this can lead to performance bottlenecks. PgBouncer addresses this issue by pooling and reusing database connections, resulting in significant improvements in efficiency and scalability.
 
-Before we dive into the technical details, let's take a look at the configuration file and systemd unit that will enable us to set up PgBouncer for PostgreSQL on Fedora CoreOS. The provided configuration ensures seamless integration and secure communication between PgBouncer and PostgreSQL.
+Before we dive into the technical details, let's take a look at the configuration file and systemd unit file that will enable us to set up PgBouncer for PostgreSQL on Fedora CoreOS.
 
 ## The Configuration File
 
@@ -98,7 +98,7 @@ exit 0
 First it waits until the PostgreSQL instance is ready to accept connections. Then it creates a database user called `pgbouncer`.
 The user `pgbouncer` is granted with a very limited set of privileges. It can only connect to the database and execute the `get_auth` function. This function is used by PgBouncer to verify whether incoming connections are allowed or not.
 
-After the script is successfully executed, we can specify the `pgbouncer` user as a `AUTH_USER` in the systemd unit configuration.
+After the script is successfully executed, we can specify the `pgbouncer` user as an `AUTH_USER` in the systemd unit configuration.
 
 In the systemd unit configuration, we are specifying the `AUTH_QUERY` with the value `SELECT username, password FROM pgbouncer.get_auth($1)`. This means that PgBouncer will execute the `pgbouncer.get_auth` function with the username provided by the client. If the function returns a row, then the connection is allowed. Otherwise, the connection is rejected.
 
@@ -106,14 +106,14 @@ Then we have the `STATS_USERS` parameter. This parameter specifies the users tha
 
 Finally we have `AUTH_FILE`. This parameter specifies the location of the `userlist.txt` file. This file contains the username and password of the users that are allowed to connect to the database. In our setup (which is a very simple setup), the file contains the following:
 
-```bash
+```
 "pgbouncer" "pgbouncer"
 "stats_collector" "collector_stats"
 ```
 
-Users in this file are allowed to connect to the database and will not be queried against the `pgbouncer.get_auth` function. This is one of the reasons why it is important to give the `pgbouncer` user only with necessary privileges.
+Users in this file are allowed to connect to the database and will not be queried against the `pgbouncer.get_auth` function.
 
-Now that we have covered the systemd unit configuration, we can deploy the EC2 instances with our new configuration file. However, we need to change an entry in our Security Group task. Since we are now using PgBouncer on port 6432, we wouldn't want to expose port 5432 that is used by the Postgres DB. Instead, we will expose the port 6432. Here's the updated version of the Security Group task in the `network_conf-task.yml` file:
+Now that we have covered the systemd unit configuration, we can ready to deploy the EC2 instances with our new configuration file. However, we still need to change an entry in our Security Group task. Since we are now using PgBouncer on port 6432, we wouldn't want to expose port 5432 that is used by the Postgres DB. Instead, we will expose the port 6432. Here's the updated version of the Security Group task in the `network_conf-task.yml` file:
 ```yaml
 # ... Configurations from the previous blog post
 - name: Ensure that the security group exists
@@ -187,13 +187,13 @@ Or you can also connect to the database as the `stats_collector` user to be able
 psql -h <ec2-instance-public-ip> -p 6432 -U stats_collector -d pgbouncer
 ```
 
-After being prompted for the password, you should see a response similar to the following:
+After entering the correct password, you should see a response similar to the following:
 
 ```bash
 psql (14.0)
 Type "help" for help.
 
-postgres=> # Or pgbouncer=> if you are connecting as the stats_collector user
+postgres=> # Or pgbouncer=> if you are logged in as the stats_collector user
 ```
 
 With that we have verified that the PgBouncer service is running and that we can connect to the database using the PgBouncer service.
@@ -204,4 +204,4 @@ In this blog post, we've explored the essential concept of using PgBouncer, a co
 
 By following the detailed steps and configurations outlined in this blog post, you've taken a significant step towards optimizing your PostgreSQL setup for high-performance and scalability. With PgBouncer in place, you can confidently manage your database connections while maintaining a secure and efficient PostgreSQL environment.
 
-We hope this guide has been informative and that it simplifies your journey in harnessing the full potential of PostgreSQL. Feel free to explore further and adapt these concepts to your specific use cases!
+We hope this guide has been informative and that it simplifies your journey in harnessing the full potential of PostgreSQL!
