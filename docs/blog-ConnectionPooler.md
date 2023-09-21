@@ -1,5 +1,7 @@
 # Setting up a Connection Pooler for PostgreSQL on EC2 Instances
 
+![pgbouncer-arch](pgbouncer.jpg)
+
 In the world of database management, PostgreSQL stands tall as a powerful and reliable open-source relational database system. However, as database workloads grow, efficient connection management becomes crucial for maintaining performance and scalability. This is where connection poolers like PgBouncer come into play.
 
 In this blog post, we'll explore the setup and configuration of PgBouncer—a lightweight connection pooler—for PostgreSQL on Amazon EC2 instances. PgBouncer acts as an intermediary between your application and the database, efficiently managing database connections.
