@@ -6,7 +6,7 @@ In our previous blog posts, we explored how to create a strong and reliable Post
 
 ## Why Load Balancing?
 
-![Why Load Balancing?](why-lb.svg)
+<img src="why-lb.jpg" alt="why-lb" width="400"/>
 
 In a highly available PostgreSQL cluster, load balancing is a must-have feature. There are many ways on how we can take advantage of the load balancer.
 
@@ -82,14 +82,7 @@ Now, we can connect to the Postgres DB through the PgBouncer using `postgres` as
 psql -h patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com -U postgres -p 6432
 ```
 
-After that you will be prompted to enter the password:
-
-```bash
-Password for user postgres:
-```
-
-And after entering the correct password, you will be connected to the PostgreSQL cluster:
-
+After entering the correct password, you will be connected to the PostgreSQL cluster:
 
 ```bash
 psql (13.4 (Ubuntu 13.4-1.pgdg20.04+1), server 13.4)
