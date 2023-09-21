@@ -1,5 +1,7 @@
 # Exporting metrics from etcd, PostgreSQL, PgBouncer and Patroni
 
+![metrics exporter](metrics-exporter.jpg)
+
 In today's complex IT landscapes, monitoring is not just a nice-to-have but a necessity. It is important to know what is going on in your systems, and to be able to react quickly to any issues that arise. In this blog post, we will look at how to export metrics from etcd, PostgreSQL, PgBouncer and Patroni, and how to visualize them using Prometheus and Grafana.
 
 ## Prerequisites
