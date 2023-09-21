@@ -12,14 +12,14 @@ The backup can be stored in a file system or in an S3 bucket. The advantage of u
 
 ## Setting up the S3 Bucket
 
-Now let's see how we can set up an S3 bucket for our PostgreSQL cluster. We will be using the [AWS S3 Bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html) for this purpose.
+Now let's see how we can set up an S3 bucket for our PostgreSQL cluster.
 
-The first step is to create a new S3 Bucket. We will create a new S3 Bucket called `patroni-demo-bucket`. We can use the following Ansible task to create the S3 Bucket:
+The first step is to create a new S3 Bucket. Let's name it `patroni-demo-bucket`. We can use the following Ansible task to create the S3 Bucket:
 
 ```yaml
 - name: Ensure that a S3 Bucket for WAL backups exists
   amazon.aws.s3_bucket:
-    name: "patroni-demo-bucket
+    name: "patroni-demo-bucket"
     state: present
     region: "{{ instance_region }}"
     tags:
@@ -66,7 +66,7 @@ The next step is to create a new IAM Role that will be used by the EC2 instances
     policy_json : "{{ lookup('file', './patroni-wal-role-policy.json')|string }}"
 ```
 
-Notice that we are using the `assume_role_policy_document` parameter to specify on which resources the IAM Role can be assumed. In our case, we will be using the EC2 instances running the Spilo image. We are also using the `policy_json` parameter to specify the permissions that the IAM Role will have. In our case, we will be using the permissions provided by the `patroni-wal-role-policy.json` file. The permissions in the file are the minimum permissions required to access the S3 bucket. To get the details about the permissions, you can visit to our [GitHub repository](https://github.com/proventa/aws-postgresql-demo).
+Notice that we are using the `assume_role_policy_document` parameter to specify on which resources the IAM Role can be assumed. In our case, we will be using the EC2 instances running the Spilo image. We are also using the `policy_json` parameter to specify the permissions that the IAM Role will have. In our case, we will be using the permissions provided by the `patroni-wal-role-policy.json` file. The permissions in the file are the minimum permissions required to access the S3 bucket. Here are the links to the details of the [assume_role_policy_document](../cluster-patroni/assume_role_policy.json) and the [patroni-wal-role-policy.json](../cluster-patroni/patroni-wal-role-policy.json).
 
 After that we can use the `Instance Profile` to assign the IAM Role to the EC2 instances running the Spilo image. We can take the `Start Fedora CoreOS instances` task from the previous blog and update it to assign the IAM Role to the EC2 instances. Here is how the updated task should look like:
 
@@ -122,11 +122,12 @@ ExecStart=/usr/bin/podman \
 
 We are specifying the `AWS_REGION`, `WAL_S3_BUCKET`, and `AWS_ROLE_ARN` environment variables. The `AWS_REGION` environment variable specifies the region in which the S3 bucket is located. The `WAL_S3_BUCKET` environment variable specifies the name of the S3 bucket. The `AWS_ROLE_ARN` environment variable specifies the ARN of the IAM Role. The IAM Role will be used by the EC2 instances running the Spilo image to access the S3 bucket.
 
+After that, we can just run the Ansible script again to provision the EC2 instances that will be running the Spilo Image. It will automatically create WAL-G backups and store them in the S3 bucket. Let the Spilo image run for a few minutes and then we can check if the backups are being stored in the S3 bucket.
 ## Verifying the WAL backups on the S3 Bucket
 
-Now, let's check if the backups are actually being stored in the S3 bucket. We can do so by navigating to the AWS console and selecting the `patroni-demo-bucket` S3 bucket. We should see a new folder called `spilo` in the S3 bucket. The folder should contain a folder with the name of your Patroni cluster and inside that folder, we should see the WAL-G backups. 
+Now, let's check if the backups are actually being stored in the S3 bucket. We can do so by navigating to the S3 Bucket section in the AWS console and selecting the `patroni-demo-bucket` S3 bucket. We should see a new folder called `spilo` in the S3 bucket. The folder should contain a folder with the name of your Patroni cluster and inside that folder, we should see the WAL-G backups. 
 
-We can also check if the backups are being stored in the S3 bucket by running the following command on your terminal:
+We can also check it with the AWS CLI by running the following command on your terminal:
 
 ```bash
 aws s3 ls s3://patroni-demo-bucket/spilo/superman --recursive --human-readable --summarize
