@@ -34,7 +34,7 @@ The first step is to create a new Target Group. The Target Group is a group of i
     protocol: tcp
     port: 6432
     health_check_protocol: http
-    health_check_path: /
+    health_check_path: /primary
     health_check_port: 8008
     successful_response_codes: "200" # Only forward the traffic to the master node
     target_type: instance
@@ -44,6 +44,8 @@ The first step is to create a new Target Group. The Target Group is a group of i
 ```
 
 In the `health_check_port` parameter, we specify the port on which the health check will be performed. In our case, we will be using the health check endpoint provided by Patroni. The health check endpoint is available on port 8008. The `successful_response_codes` parameter specifies the response codes that are considered successful. In our case, we will only forward the traffic to the master node, so we will only consider the response code 200 as successful. The replica nodes will return the response code 503, which means that the node is not available to receive traffic.
+
+Keep in mind that in this case we are using `HTTP` as the health check protocol, since the health check endpoint provided by Patroni is an HTTP endpoint. If you are using `HTTPS` as the health check protocol, you should also specify `HTTPS` in the `health_check_protocol` parameter.
 
 The next step is to create a new Load Balancer. We will create a new Load Balancer called `patroni-nlb` and add the Target Group `patroni-tg` to it. We can use the following Ansible task to create the Load Balancer:
 
