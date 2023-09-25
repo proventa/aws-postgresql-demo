@@ -186,7 +186,7 @@ The task to import the dashboards is as follows:
     with_items: "{{ monitoring_public_ip }}"
 ```
 
-Make sure to replace `<cluster-name>` with the name of your cluster, which has the same name as the Grafana dashboard JSON file. The JSON file for the dashboard can be downloaded from our GitHub repository [here](https://github.com/proventa/aws-postgresql-demo).
+Make sure to replace `<cluster-name>` with the name of the Grafana dashboard JSON file. The JSON file for each dashboards can be downloaded from our GitHub repository [here](https://github.com/proventa/aws-postgresql-demo).
 
 Here are some screenshots of the Grafana dashboard:
 
@@ -195,12 +195,15 @@ Here are some screenshots of the Grafana dashboard:
 ![etcd-dashboard](etcd-dashboard.png)
 
 - PostgreSQL dashboard
+
 ![postgres-dashboard](postgres-dashboard.png)
 
 - PgBouncer dashboard
+
 ![pgbouncer-dashboard](pgbouncer-dashboard.png)
 
 - Patroni dashboard
+
 ![patroni-dashboard](patroni-dashboard.png)
 
 ## Wrapping Up
