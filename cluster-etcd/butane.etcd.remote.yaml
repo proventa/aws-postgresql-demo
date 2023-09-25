@@ -107,12 +107,106 @@ systemd:
             --peer-trusted-ca-file /self-certs/proventa-root-ca.pem \
             --discovery=${ETCD_DISCOVERY_ADDR}
           ExecStop=/usr/bin/podman rm -f etcd-container
-          ExecStopPost=/usr/bin/rm -rf ${HOME}/etcd-data
+
+          [Install]
+          WantedBy=multi-user.target
+
+      - name: airlock.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=airlock with Podman
+
+          After=etcd.service
+          Requires=etcd.service
+
+          [Service]
+          User=etcd-user
+          Restart=always
+          RestartSec=5s
+          TimeoutStartSec=0
+          LimitNOFILE=40000
+
+          ExecStartPre=/usr/bin/loginctl enable-linger etcd-user
+          ExecStartPre=/usr/local/bin/prepare-airlock.sh
+          ExecStartPre=/usr/bin/podman rm -f airlock-container
+          ExecStart=/usr/bin/podman \
+            run \
+            --rm \
+            --net=host \
+            --name airlock-container \
+            --volume=/etc/ssl/self-certs:/self-certs \
+            --volume=/usr/local/share/airlock-config.toml:/etc/airlock/config.toml \
+            quay.io/coreos/airlock:main \
+            airlock serve -vv
+          ExecStop=/usr/bin/podman rm -f airlock-container
 
           [Install]
           WantedBy=multi-user.target
 storage:
     files:
+        - path: /etc/zincati/config.d/55-updates-strategy.toml
+          contents:
+            inline: |
+              [updates]
+              strategy = "fleet_lock"
+              [updates.fleet_lock]
+              base_url = "http://127.0.0.1:3333"
+
+        - path: /etc/zincati/config.d/90-custom-identity.toml
+          contents:
+            inline: |
+              [identity]
+              group = "etcd"
+
+        - path: /usr/local/share/airlock-config.toml
+          mode: 0644
+          contents:
+            inline: |
+              # Status service configuration
+              [status]
+              enabled = true
+              address = "127.0.0.1"
+              port = 2222
+              tls = false
+
+              # Main service configuration
+              [service]
+              address = "127.0.0.1"
+              port = 3333
+              tls = false
+
+              # Etcd-v3 client configuration
+              [etcd3]
+              endpoints = [ "http://127.0.0.1:2379" ]
+
+              # Lock configuration, base reboot group
+              [lock]
+              default_group_name = "default"
+              default_slots = 2
+              
+              # Additional reboot groups
+              [[lock.groups]]
+              name = "etcd"
+              slots = 1
+
+        - path: /usr/local/bin/prepare-airlock.sh
+          mode: 0755
+          contents:
+            inline: |
+              #!/bin/bash
+
+              # Check whether etcd client is healthy and ready
+              ETCD_ISREADY=$(podman exec -it etcd-container etcdctl endpoint health | grep -c "is healthy")
+
+              until [ $ETCD_ISREADY -eq 1 ]; do
+                echo "Waiting for etcd to be ready..."
+                ETCD_ISREADY=$(podman exec -it etcd-container etcdctl endpoint health | grep -c "is healthy")
+                sleep 1
+              done
+
+              echo "etcd is ready"
+
         - path: /etc/ssl/self-certs/proventa-gencert-config.json
           mode: 0644
           contents:
