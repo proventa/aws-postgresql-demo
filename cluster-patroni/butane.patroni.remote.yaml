@@ -256,17 +256,20 @@ storage:
               # Get etcd ip address from patroni-env file and format it accordingly
               ETCD_HOSTS=$(grep ETCD_HOSTS /etc/patroni-env | cut -d '=' -f2 | sed 's/,/","/g' | sed 's/10/https:\/\/10/g')
 
+              # Get private ip
+              PRIVATE_IP=$(hostname -I | cut -d ' ' -f1)
+
               cat <<EOF > $HOME/airlock-config.toml
               # Status service configuration
               [status]
               enabled = true
-              address = "127.0.0.1"
+              address = "$PRIVATE_IP"
               port = 2222
               tls = false
 
               # Main service configuration
               [service]
-              address = "127.0.0.1"
+              address = "$PRIVATE_IP"
               port = 3333
               tls = false
 
