@@ -58,6 +58,7 @@ systemd:
           ExecStartPre=/usr/bin/mkdir -p ${HOME}/patroni
           ExecStartPre=/usr/bin/podman rm -f patroni-container
           ExecStartPre=/usr/local/bin/prepare-certs.sh
+          ExecStartPre=/usr/local/bin/prepare-airlock.sh
           ExecStart=/usr/bin/podman \
             run \
             --rm \
@@ -197,8 +198,95 @@ systemd:
           [Install]
           WantedBy=multi-user.target
 
+      - name: airlock.service
+        enabled: true
+        contents: |
+          [Unit]
+          Description=airlock with Podman
+
+          After=preparation.service
+          Requires=preparation.service
+
+          [Service]
+          User=patroni-user
+          Restart=always
+          RestartSec=5s
+          TimeoutStartSec=0
+          LimitNOFILE=40000
+
+          ExecStartPre=/usr/bin/loginctl enable-linger patroni-user
+          ExecStartPre=/usr/local/bin/prepare-airlock.sh
+          ExecStartPre=/usr/bin/podman rm -f airlock-container
+          ExecStart=/usr/bin/podman \
+            run \
+            --rm \
+            --net=host \
+            --name airlock-container \
+            --volume=/etc/ssl/certs:/etc/ssl/certs \
+            --volume=/etc/ssl/self-certs:/etc/ssl/self-certs \
+            --volume=${HOME}/airlock-config.toml:/etc/airlock/config.toml \
+            quay.io/coreos/airlock:main \
+            airlock serve -vv
+          ExecStop=/usr/bin/podman rm -f airlock-container
+
+          [Install]
+          WantedBy=multi-user.target
 storage:
     files:
+        - path: /etc/zincati/config.d/55-updates-strategy.toml
+          contents:
+            inline: |
+              [updates]
+              strategy = "fleet_lock"
+              [updates.fleet_lock]
+              base_url = "http://127.0.0.1:3333"
+
+        - path: /etc/zincati/config.d/90-custom-identity.toml
+          contents:
+            inline: |
+              [identity]
+              group = "patroni"
+
+        - path: /usr/local/bin/prepare-airlock.sh
+          mode: 0755
+          contents:
+            inline: |
+              #!/bin/bash
+
+              # Get etcd ip address from patroni-env file and format it accordingly
+              ETCD_HOSTS=$(grep ETCD_HOSTS /etc/patroni-env | cut -d '=' -f2 | sed 's/,/","/g' | sed 's/10/https:\/\/10/g')
+
+              cat <<EOF > $HOME/airlock-config.toml
+              # Status service configuration
+              [status]
+              enabled = true
+              address = "127.0.0.1"
+              port = 2222
+              tls = false
+
+              # Main service configuration
+              [service]
+              address = "127.0.0.1"
+              port = 3333
+              tls = false
+
+              # Etcd-v3 client configuration
+              [etcd3]
+              endpoints = [ $ETCD_HOSTS ]
+              client_cert_pub_path = "/etc/ssl/self-certs/proventa-client-cert.pem"
+              client_cert_key_path = "/etc/ssl/self-certs/proventa-client-cert-key.pem"
+
+              # Lock configuration, base reboot group
+              [lock]
+              default_group_name = "default"
+              default_slots = 2
+              
+              # Additional reboot groups
+              [[lock.groups]]
+              name = "patroni"
+              slots = 1
+              EOF
+
         - path: /etc/patroni-env
           mode: 0755
           contents:
