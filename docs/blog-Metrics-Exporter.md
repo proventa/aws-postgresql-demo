@@ -1,8 +1,8 @@
-# Exporting metrics from etcd, PostgreSQL, PgBouncer and Patroni
+# Exporting metrics from etcd, PostgreSQL, PgBouncer & Patroni
 
 ![metrics exporter](metrics-exporter.jpg)
 
-In today's complex IT landscapes, monitoring is not just a nice-to-have but a necessity. It is important to know what is going on in your systems, and to be able to react quickly to any issues that arise. In this blog post, we will look at how to export metrics from etcd, PostgreSQL, PgBouncer and Patroni, and how to visualize them using Prometheus and Grafana.
+In today's complex IT landscapes, monitoring is not just a nice-to-have but a necessity. It is important to know what is going on in your systems, and to be able to react quickly to any issues that arise. In this blog post, we will look at how to expose metrics from etcd, PostgreSQL, PgBouncer and Patroni. This is the foundation for another blog entry to collect metrics with Prometheus and visualize the state with Grafana.
 
 ## Prerequisites
 
@@ -37,7 +37,7 @@ If you see the above response, then your etcd cluster is ready to be scraped by 
 
 ## Exporting metrics from PostgreSQL
 
-Since PostgreSQL does not have a built-in metrics exporter, we will need to use a service called [pg_exporter](https://github.com/prometheus-community/postgres_exporter). This is a community-driven project that provides a metrics exporter for PostgreSQL. It comes in a container image, which makes it easy to deploy. We will run the container in the same VM as the PostgreSQL cluster, and expose the metrics on port `9187`. Here is the systemd butane configuration for the pg_exporter:
+Since PostgreSQL does not have a built-in metrics exporter, we will need to use a service called [postgres_exporter](https://github.com/prometheus-community/postgres_exporter). This is a community-driven project that provides a metrics exporter for PostgreSQL. It comes in a container image, which makes it easy to deploy. We will run the container in the same VM as the PostgreSQL cluster, and expose the metrics on port `9187`. Here is the systemd butane configuration for the postgres_exporter:
 
 ```yaml
 - name: pg-exporter.service
@@ -90,11 +90,11 @@ Whereas the `web-config.yml` file in the `storage.files` section of the same but
         client_ca_file: /etc/ssl/self-certs/proventa-root-ca.pem
 ```
 
-The above configuration will run the pg_exporter container, and expose the metrics on port `9187`. It will also use the self-signed certificates that we generated with a script mentioned in the previous blog posts. Therefore, the metrics will be secured with TLS.
+The above configuration will run the postgres_exporter container, and expose the metrics on port `9187`. It will also use the self-signed certificates that we generated with a script mentioned in the previous blog posts. Therefore, the metrics will be secured with TLS.
 
-Other than that, we also specify the `DATA_SOURCE_URI`, `DATA_SOURCE_USER` and `DATA_SOURCE_PASS` environment variables. These are the credentials that the pg_exporter will use to connect to the PostgreSQL cluster. The `DATA_SOURCE_URI` is the URI of the PostgreSQL cluster. In our case, we will be using the URI `localhost:5432` since we will be running the pg_exporter container in the same VM as the PostgreSQL cluster. The `DATA_SOURCE_USER` and `DATA_SOURCE_PASS` are the credentials of the PostgreSQL cluster. In our case, we will be using the credentials `postgres` and `zalando` respectively.
+Other than that, we also specify the `DATA_SOURCE_URI`, `DATA_SOURCE_USER` and `DATA_SOURCE_PASS` environment variables. These are the credentials that the postgres_exporter will use to connect to the PostgreSQL cluster. The `DATA_SOURCE_URI` is the URI of the PostgreSQL cluster. In our case, we will be using the URI `localhost:5432` since we will be running the postgres_exporter container in the same VM as the PostgreSQL cluster. The `DATA_SOURCE_USER` and `DATA_SOURCE_PASS` are the credentials of the PostgreSQL cluster. In our case, we will be using the credentials `postgres` and `zalando` respectively.
 
-Now that we have the systemd butane configuration for the pg_exporter, we can run deploy it by running the Ansible playbook script. Once the playbook script has finished running, the pg_exporter container will be running in the same VM as the PostgreSQL cluster, and exposing the metrics on port `9187`.
+Now that we have the systemd butane configuration for the postgres_exporter, we can deploy it by running the Ansible playbook script. Once the playbook script has finished running, the postgres_exporter container will be running in the same VM as the PostgreSQL cluster, and exposing the metrics on port `9187`.
 
 ### Verifying the postgres_exporter service
 
@@ -122,7 +122,7 @@ If you see the above response, then your PostgreSQL cluster is ready to be scrap
 
 ## Exporting metrics from PgBouncer
 
-Since PgBouncer does not have a built-in metrics exporter, we will need to use a service called [pgbouncer_exporter](https://github.com/prometheus-community/pgbouncer_exporter). Similar to the pg_exporter, it also comes in a container image, which makes it very easy to deploy. We will run the container in the same VM as the PgBouncer, and expose the metrics on port `9127`. Here is the systemd butane configuration for the pgbouncer_exporter:
+Since PgBouncer does not have a built-in metrics exporter, we will need to use a service called [pgbouncer_exporter](https://github.com/prometheus-community/pgbouncer_exporter). Similar to the postgres_exporter, it also comes in a container image, which makes it very easy to deploy. We will run the container in the same VM as the PgBouncer, and expose the metrics on port `9127`. Here is the systemd butane configuration for the pgbouncer_exporter:
 
 ```yaml
 - name: pgbouncer-exporter.service
@@ -157,7 +157,7 @@ Since PgBouncer does not have a built-in metrics exporter, we will need to use a
     WantedBy=multi-user.target
 ```
 
-Whereas the `web-config.yml` file is the same as the one used for the pg_exporter. The above configuration will run the pgbouncer_exporter container, and expose the metrics on port `9127`. The metrics will also be secured with TLS just like the pg_exporter.
+Whereas the `web-config.yml` file is the same as the one used for the postgres_exporter. The above configuration will run the pgbouncer_exporter container, and expose the metrics on port `9127`. The metrics will also be secured with TLS just like the postgres_exporter.
 
 We also specify the `pgBouncer.connectionString` environment variable. This is the connection string that the pgbouncer_exporter will use to connect to the PgBouncer cluster. In our case, we will be using the connection string `postgresql://stats_collector:collector_stats@localhost:6432/pgbouncer`.
 
