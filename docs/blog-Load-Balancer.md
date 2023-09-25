@@ -2,7 +2,7 @@
 
 ![Patroni Load Balancing](patroni-loadbalancing.jpg)
 
-In our previous blog posts, we explored how to create a strong and reliable PostgreSQL cluster using Patroni and the Spilo image. We also covered topics like connection pooling for PostgreSQL and the use of S3 buckets for backup and recovery, all of which boosted PostgreSQL's reliability and availability. Now, as we move forward, let's dive into the next part of our journey: <b>Load Balancing</b>. 
+In our previous blog posts, we explored how to create a strong and reliable PostgreSQL cluster using Patroni and the Spilo container image. We also covered topics like connection pooling for PostgreSQL and the use of S3 buckets for backup and recovery, all of which boosted PostgreSQL's reliability and availability. Now, as we move forward, let's dive into the next part of our journey: <b>Load Balancing</b>.
 
 ## Why Load Balancing?
 
@@ -12,7 +12,7 @@ In a highly available PostgreSQL cluster, load balancing is a must-have feature.
 
 One option is to distribute the traffic across the cluster nodes. The load balancer can be configured so that it distributes read traffic across all the nodes in the cluster and write traffic to the primary node. However, in our case, we will be using the replicas as standby replicas, not active replicas. This means that the replicas will not be used for any incoming requests but rather as a failover node in case the primary node goes down.
 
-So, the other option is to use the load balancer to determine the master node, to which the incoming requests can be routed. If the master node fails, the load balancer can <b>automatically</b> decide which node is the new master and route the requests to that node. This is the approach we will be using.
+So, the other option is to use the load balancer to determine the primary node, to which the incoming requests can be routed. If the primary node fails, the load balancer can <b>automatically</b> decide which node is the new primary and route the requests to that node. This is the approach we will be using.
 
 ## Setting up the Load Balancer
 
@@ -36,14 +36,14 @@ The first step is to create a new Target Group. The Target Group is a group of i
     health_check_protocol: http
     health_check_path: /primary
     health_check_port: 8008
-    successful_response_codes: "200" # Only forward the traffic to the master node
+    successful_response_codes: "200" # Only forward the traffic to the primary node
     target_type: instance
     targets: "{{ target_list }}" # The list of instance ids that will receive traffic from the load balancer
     state: present
     register: tg
 ```
 
-In the `health_check_port` parameter, we specify the port on which the health check will be performed. In our case, we will be using the health check endpoint provided by Patroni. The health check endpoint is available on port 8008. The `successful_response_codes` parameter specifies the response codes that are considered successful. In our case, we will only forward the traffic to the master node, so we will only consider the response code 200 as successful. The replica nodes will return the response code 503, which means that the node is not available to receive traffic.
+In the `health_check_port` parameter, we specify the port on which the health check will be performed. In our case, we will be using the health check endpoint provided by Patroni. The health check endpoint is available on port 8008. The `successful_response_codes` parameter specifies the response codes that are considered successful. In our case, we will only forward the traffic to the primary node, so we will only consider the response code `200` as successful. The replica nodes will return the response code `503`, which means that the node is not available to receive traffic.
 
 Keep in mind that in this case we are using `HTTP` as the health check protocol, since the health check endpoint provided by Patroni is an HTTP endpoint. If you are using `HTTPS` as the health check protocol, you should also specify `HTTPS` in the `health_check_protocol` parameter.
 
@@ -78,7 +78,7 @@ The output should look like this:
 patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com
 ```
 
-Now, we can connect to the Postgres DB through the PgBouncer using `postgres` as the username and `zalando` (default password) as the password by running the following command:
+Now, we can connect to the Postgres database through the PgBouncer using `postgres` as the username and `zalando` (default password) as the password by running the following command:
 
 ```bash
 psql -h patroni-nlb-e81427453f1cdf1a.elb.eu-central-1.amazonaws.com -U postgres -p 6432
