@@ -128,6 +128,10 @@
         ports:
           - 9090
         cidr_ip: "10.0.3.0/24"
+      - proto: tcp # Airlock <-> Grafana communication
+        ports:
+          - 2222
+        cidr_ip: "10.0.0.0/16"
       - proto: tcp # Allow Grafana connections from anywhere
         ports:
           - 3000
