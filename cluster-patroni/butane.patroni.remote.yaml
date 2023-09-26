@@ -58,7 +58,6 @@ systemd:
           ExecStartPre=/usr/bin/mkdir -p ${HOME}/patroni
           ExecStartPre=/usr/bin/podman rm -f patroni-container
           ExecStartPre=/usr/local/bin/prepare-certs.sh
-          ExecStartPre=/usr/local/bin/prepare-airlock.sh
           ExecStart=/usr/bin/podman \
             run \
             --rm \
