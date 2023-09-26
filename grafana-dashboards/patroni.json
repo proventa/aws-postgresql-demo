@@ -2271,7 +2271,7 @@
           "query": "query_result(patroni_version)",
           "refId": "StandardVariableQuery"
         },
-        "refresh": 0,
+        "refresh": 1,
         "regex": "/.*instance=\"([^\"]+).*/",
         "skipUrlSync": false,
         "sort": 1,
