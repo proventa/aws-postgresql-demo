@@ -16,8 +16,32 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 5,
-    "links": [],
+  "iteration": 1695717182876,
+  "links": [],
   "panels": [
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "content": "<h1 style='color:#5991A7;font-weight:bold;text-align:center;font-style:italic'>Data for <span style='color:#e68a00'>$group</span></h1>",
+        "mode": "markdown"
+      },
+      "pluginVersion": "7.5.7",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Title",
+      "type": "text"
+    },
     {
       "aliasColors": {},
       "bars": false,
@@ -25,19 +49,21 @@
       "dashes": false,
       "datasource": null,
       "fieldConfig": {
-        "defaults": {},
+        "defaults": {
+          "unit": "short"
+        },
         "overrides": []
       },
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 24,
         "x": 0,
-        "y": 0
+        "y": 4
       },
       "hiddenSeries": false,
-      "id": 6,
+      "id": 2,
       "legend": {
         "avg": false,
         "current": false,
@@ -65,9 +91,9 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "airlock_v1_steady_state_incoming_requests_total{group=~\"$group\"}",
+          "expr": "airlock_database_semaphore_lock_holders{group=\"patroni-airlock\", exported_group=\"default\"}",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -75,7 +101,101 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Steady State Request",
+      "title": "Lock Holders",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
+      "hiddenSeries": false,
+      "id": 4,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.7",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "airlock_v1_pre_reboot_incoming_requests_total{group=\"patroni-airlock\"}",
+          "interval": "",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Pre-Reboot Request",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -128,10 +248,10 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 12
       },
       "hiddenSeries": false,
-      "id": 4,
+      "id": 6,
       "legend": {
         "avg": false,
         "current": false,
@@ -159,9 +279,9 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "airlock_v1_pre_reboot_incoming_requests_total{group=\"patroni-airlock\"}",
+          "expr": "airlock_v1_steady_state_incoming_requests_total{group=~\"$group\"}",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
@@ -169,103 +289,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Pre-Reboot Request",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      },
-      "hiddenSeries": false,
-      "id": 2,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "7.5.7",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "exemplar": true,
-          "expr": "airlock_database_semaphore_lock_holders{group=\"patroni-airlock\", exported_group=\"default\"}",
-          "interval": "",
-          "legendFormat": "",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Lock Holders",
+      "title": "Steady State Request",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -313,8 +337,8 @@
         "allValue": null,
         "current": {
           "selected": true,
-          "text": "etcd-airlock",
-          "value": "etcd-airlock"
+          "text": "patroni-airlock",
+          "value": "patroni-airlock"
         },
         "datasource": null,
         "definition": "query_result(airlock_config_semaphore_slots)",
@@ -327,12 +351,12 @@
         "name": "group",
         "options": [
           {
-            "selected": true,
+            "selected": false,
             "text": "etcd-airlock",
             "value": "etcd-airlock"
           },
           {
-            "selected": false,
+            "selected": true,
             "text": "patroni-airlock",
             "value": "patroni-airlock"
           }
@@ -361,5 +385,5 @@
   "timezone": "",
   "title": "Patroni Airlock Dashboard",
   "uid": "9E__4vWSk",
-  "version": 2
+  "version": 8
 }
