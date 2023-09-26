@@ -132,19 +132,19 @@ systemd:
             --rm \
             --net=host \
             --name pgbouncer-container \
-            --volume /etc/ssl/etcd-certs:/opt/bitnami/pgbouncer/certs \
+            --volume /etc/ssl/etcd-certs:/etc/ssl/etcd-certs \
             --env DB_HOST="localhost" \
             --env DB_NAME="postgres" \
             --env DB_PORT="5432" \
             --env AUTH_USER="pgbouncer" \
-            --env AUTH_FILE="/opt/bitnami/pgbouncer/certs/userlist.txt" \
+            --env AUTH_FILE="/etc/ssl/etcd-certs/userlist.txt" \
             --env AUTH_QUERY="SELECT username, password FROM pgbouncer.get_auth($1)" \
             --env AUTH_TYPE="scram-sha-256" \
             --env LISTEN_PORT="6432" \
             --env CLIENT_TLS_SSLMODE="require" \
-            --env CLIENT_TLS_KEY_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-client-cert-key.pem" \
-            --env CLIENT_TLS_CERT_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-client-cert.pem" \
-            --env CLIENT_TLS_CA_FILE="/opt/bitnami/pgbouncer/certs/proventa-etcd-root-ca.pem" \
+            --env CLIENT_TLS_KEY_FILE="/etc/ssl/etcd-certs/proventa-etcd-client-cert-key.pem" \
+            --env CLIENT_TLS_CERT_FILE="/etc/ssl/etcd-certs/proventa-etcd-client-cert.pem" \
+            --env CLIENT_TLS_CA_FILE="/etc/ssl/etcd-certs/proventa-etcd-root-ca.pem" \
             docker.io/edoburu/pgbouncer:1.20.1-p0
 
           ExecStop=/usr/bin/podman rm -f pgbouncer-container
