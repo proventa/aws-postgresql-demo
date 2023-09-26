@@ -49,3 +49,13 @@ scrape_configs:
     key_file: "/etc/ssl/self-certs/proventa-client-cert-key.pem"
     insecure_skip_verify: false
   scheme: https
+- job_name: 'patroni-airlock'
+  static_configs:
+  - targets: [{% for ip in patroni_private_ips %}'{{ ip }}:2222'{% if not loop.last %},{% endif %}{% endfor %}]
+    labels:
+      group: 'patroni-airlock'
+- job_name: 'etcd-airlock'
+  static_configs:
+  - targets: [{% for ip in etcd_private_ips %}'{{ ip }}:2222'{% if not loop.last %},{% endif %}{% endfor %}]
+    labels:
+      group: 'etcd-airlock'
