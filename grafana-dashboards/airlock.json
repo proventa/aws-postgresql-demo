@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 5,
-  "iteration": 1695717330346,
+  "iteration": 1695733413737,
   "links": [],
   "panels": [
     {
@@ -277,7 +277,7 @@
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
@@ -368,14 +368,16 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:2459",
           "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
+          "$$hashKey": "object:2460",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -462,14 +464,16 @@
       },
       "yaxes": [
         {
+          "$$hashKey": "object:2512",
           "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
-          "min": null,
+          "min": "0",
           "show": true
         },
         {
+          "$$hashKey": "object:2513",
           "format": "short",
           "label": null,
           "logBase": 1,
@@ -493,7 +497,7 @@
       {
         "allValue": null,
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "patroni-airlock",
           "value": "patroni-airlock"
         },
@@ -532,7 +536,7 @@
         "definition": "query_result(airlock_config_semaphore_slots{group=~\"$group\", exported_group!=\"default\"})",
         "description": null,
         "error": null,
-        "hide": 0,
+        "hide": 2,
         "includeAll": false,
         "label": "exported_group",
         "multi": false,
