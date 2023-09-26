@@ -110,12 +110,12 @@ systemd:
             --net=host \
             --name pgbouncer-container \
             --volume /etc/ssl/self-certs:/etc/ssl/self-certs \
-            --volume /usr/local/share/userlist.txt:/opt/bitnami/pgbouncer/userlist.txt \
+            --volume /usr/local/share/userlist.txt:/etc/ssl/self-certs/userlist.txt \
             --env DB_HOST="localhost" \
             --env DB_NAME="postgres" \
             --env DB_PORT="5432" \
             --env AUTH_USER="pgbouncer" \
-            --env AUTH_FILE="/opt/bitnami/pgbouncer/userlist.txt" \
+            --env AUTH_FILE="/etc/ssl/self-certs/userlist.txt" \
             --env AUTH_QUERY="SELECT username, password FROM pgbouncer.get_auth($1)" \
             --env AUTH_TYPE="scram-sha-256" \
             --env STATS_USERS="stats_collector" \
