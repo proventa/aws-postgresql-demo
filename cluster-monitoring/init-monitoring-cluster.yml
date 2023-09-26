@@ -169,3 +169,14 @@
         overwrite: yes
         path: "../grafana-dashboards/postgres.json"
       with_items: "{{ monitoring_public_ip }}"
+
+    - name: Import Airlock Grafana dashboards
+      community.grafana.grafana_dashboard:
+        grafana_url: "http://{{ item }}:3000/"
+        grafana_user: "admin"
+        grafana_password: "{{ grafana_password }}"
+        state: present
+        commit_message: Updated by ansible
+        overwrite: yes
+        path: "../grafana-dashboards/airlock.json"
+      with_items: "{{ monitoring_public_ip }}"
