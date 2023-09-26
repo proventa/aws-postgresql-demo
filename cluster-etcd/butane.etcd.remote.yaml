@@ -135,8 +135,9 @@ systemd:
             --rm \
             --net=host \
             --name airlock-container \
-            --volume=/etc/ssl/self-certs:/self-certs \
-            --volume=/usr/local/share/airlock-config.toml:/etc/airlock/config.toml \
+            --volume=/etc/ssl/certs:/etc/ssl/certs \
+            --volume=/etc/ssl/self-certs:/etc/ssl/self-certs \
+            --volume=${HOME}/airlock-config.toml:/etc/airlock/config.toml \
             quay.io/coreos/airlock:main \
             airlock serve -vv
           ExecStop=/usr/bin/podman rm -f airlock-container
@@ -159,37 +160,6 @@ storage:
               [identity]
               group = "etcd"
 
-        - path: /usr/local/share/airlock-config.toml
-          mode: 0644
-          contents:
-            inline: |
-              # Status service configuration
-              [status]
-              enabled = true
-              address = "127.0.0.1"
-              port = 2222
-              tls = false
-
-              # Main service configuration
-              [service]
-              address = "127.0.0.1"
-              port = 3333
-              tls = false
-
-              # Etcd-v3 client configuration
-              [etcd3]
-              endpoints = [ "http://127.0.0.1:2379" ]
-
-              # Lock configuration, base reboot group
-              [lock]
-              default_group_name = "default"
-              default_slots = 2
-              
-              # Additional reboot groups
-              [[lock.groups]]
-              name = "etcd"
-              slots = 1
-
         - path: /usr/local/bin/prepare-airlock.sh
           mode: 0755
           contents:
@@ -206,6 +176,38 @@ storage:
               done
 
               echo "etcd is ready"
+
+              # Get private ip
+              PRIVATE_IP=$(hostname -I | cut -d ' ' -f1)
+
+              cat <<EOF > $HOME/airlock-config.toml
+              # Status service configuration
+              [status]
+              enabled = true
+              address = "$PRIVATE_IP"
+              port = 2222
+              tls = false
+
+              # Main service configuration
+              [service]
+              address = "$PRIVATE_IP"
+              port = 3333
+              tls = false
+
+              # Etcd-v3 client configuration
+              [etcd3]
+              endpoints = [ "http://127.0.0.1:2379" ]
+
+              # Lock configuration, base reboot group
+              [lock]
+              default_group_name = "default"
+              default_slots = 2
+              
+              # Additional reboot groups
+              [[lock.groups]]
+              name = "etcd"
+              slots = 1
+              EOF
 
         - path: /etc/ssl/self-certs/proventa-gencert-config.json
           mode: 0644
