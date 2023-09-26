@@ -109,7 +109,7 @@ systemd:
             --rm \
             --net=host \
             --name pgbouncer-container \
-            --volume /etc/ssl/self-certs:/opt/bitnami/pgbouncer/certs \
+            --volume /etc/ssl/self-certs:/etc/ssl/self-certs \
             --volume /usr/local/share/userlist.txt:/opt/bitnami/pgbouncer/userlist.txt \
             --env DB_HOST="localhost" \
             --env DB_NAME="postgres" \
@@ -121,9 +121,9 @@ systemd:
             --env STATS_USERS="stats_collector" \
             --env LISTEN_PORT="6432" \
             --env CLIENT_TLS_SSLMODE="require" \
-            --env CLIENT_TLS_KEY_FILE="/opt/bitnami/pgbouncer/certs/proventa-client-cert-key.pem" \
-            --env CLIENT_TLS_CERT_FILE="/opt/bitnami/pgbouncer/certs/proventa-client-cert.pem" \
-            --env CLIENT_TLS_CA_FILE="/opt/bitnami/pgbouncer/certs/proventa-root-ca.pem" \
+            --env CLIENT_TLS_KEY_FILE="/etc/ssl/self-certs/proventa-client-cert-key.pem" \
+            --env CLIENT_TLS_CERT_FILE="/etc/ssl/self-certs/proventa-client-cert.pem" \
+            --env CLIENT_TLS_CA_FILE="/etc/ssl/self-certs/proventa-root-ca.pem" \
             docker.io/edoburu/pgbouncer:1.20.1-p0
 
           ExecStop=/usr/bin/podman rm -f pgbouncer-container
