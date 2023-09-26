@@ -16,7 +16,7 @@
   "gnetId": null,
   "graphTooltip": 0,
   "id": 5,
-  "iteration": 1695717182876,
+  "iteration": 1695717330346,
   "links": [],
   "panels": [
     {
@@ -43,6 +43,70 @@
       "type": "text"
     },
     {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {
+          "valueSize": 60
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.7",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "max(airlock_database_semaphore_slots{group=~\"$group\", exported_group=\"$exported_group\"})",
+          "interval": "",
+          "legendFormat": "{{group}}",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Allowed Slots",
+      "type": "stat"
+    },
+    {
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
@@ -58,8 +122,8 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
+        "w": 12,
+        "x": 12,
         "y": 4
       },
       "hiddenSeries": false,
@@ -91,9 +155,10 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "airlock_database_semaphore_lock_holders{group=\"patroni-airlock\", exported_group=\"default\"}",
+          "expr": "max by (group) (airlock_database_semaphore_lock_holders{group=~\"$group\", exported_group=\"$exported_group\"})",
+          "instant": false,
           "interval": "",
-          "legendFormat": "{{instance}}",
+          "legendFormat": "{{group}}",
           "refId": "A"
         }
       ],
@@ -101,12 +166,13 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Lock Holders",
+      "title": "Number of locked slots",
       "tooltip": {
         "shared": true,
         "sort": 0,
         "value_type": "individual"
       },
+      "transformations": [],
       "type": "graph",
       "xaxis": {
         "buckets": null,
@@ -185,7 +251,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "airlock_v1_pre_reboot_incoming_requests_total{group=\"patroni-airlock\"}",
+          "expr": "airlock_v1_pre_reboot_incoming_requests_total{group=~\"$group\"}",
           "interval": "",
           "legendFormat": "{{instance}}",
           "refId": "A"
@@ -327,7 +393,7 @@
       }
     }
   ],
-  "refresh": false,
+  "refresh": "1h",
   "schemaVersion": 27,
   "style": "dark",
   "tags": [],
@@ -374,6 +440,37 @@
         "tagsQuery": "",
         "type": "query",
         "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "patroni",
+          "value": "patroni"
+        },
+        "datasource": null,
+        "definition": "query_result(airlock_config_semaphore_slots{group=~\"$group\", exported_group!=\"default\"})",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "exported_group",
+        "multi": false,
+        "name": "exported_group",
+        "options": [],
+        "query": {
+          "query": "query_result(airlock_config_semaphore_slots{group=~\"$group\", exported_group!=\"default\"})",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "/.*exported_group=\"([^\"]+).*/",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
       }
     ]
   },
@@ -385,5 +482,5 @@
   "timezone": "",
   "title": "Patroni Airlock Dashboard",
   "uid": "9E__4vWSk",
-  "version": 8
+  "version": 13
 }
