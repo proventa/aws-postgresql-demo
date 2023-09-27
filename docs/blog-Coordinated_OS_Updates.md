@@ -170,4 +170,4 @@ Then the response is a `red-flag`, which means that the machine cannot be reboot
 
 ## Conclusion
 
-In this blog post, we learned how to coordinate OS updates across multiple Fedora CoreOS machines with the help of etcd and Airlock. We also learned how to configure Airlock and Zincati to use Airlock. Lastly, we learned how to test the Airlock service.
+In this blog post, we learned how to coordinate OS updates across multiple Fedora CoreOS machines with the help of etcd and Airlock. We also learned how to configure Airlock and Zincati to use Airlock. Lastly, we learned how to test the Airlock service. At this point, you should be able to coordinate OS updates across multiple Fedora CoreOS machines with the help of Airlock, ensuring that only one machine is updated at a time. We hope that you found this blog post useful!
