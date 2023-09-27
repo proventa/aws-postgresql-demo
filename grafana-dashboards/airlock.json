@@ -26,7 +26,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 4,
+        "h": 3,
         "w": 24,
         "x": 0,
         "y": 0
@@ -39,7 +39,6 @@
       "pluginVersion": "7.5.7",
       "timeFrom": null,
       "timeShift": null,
-      "title": "Title",
       "type": "text"
     },
     {
@@ -71,7 +70,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 4
+        "y": 3
       },
       "id": 9,
       "options": {
@@ -161,7 +160,7 @@
         "for": "5m",
         "frequency": "1m",
         "handler": 1,
-        "message": "Number of locked slots is above 0 for one of the cluster",
+        "message": "Information for Airlock group: $group",
         "name": "Number of locked slots alert",
         "noDataState": "no_data",
         "notifications": [
@@ -187,7 +186,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 4
+        "y": 3
       },
       "hiddenSeries": false,
       "id": 10,
@@ -311,7 +310,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 12
+        "y": 11
       },
       "hiddenSeries": false,
       "id": 4,
@@ -407,7 +406,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 12
+        "y": 11
       },
       "hiddenSeries": false,
       "id": 6,
@@ -566,5 +565,5 @@
   "timezone": "",
   "title": "Patroni Airlock Dashboard",
   "uid": "9E__4vWSk",
-  "version": 13
+  "version": 41
 }

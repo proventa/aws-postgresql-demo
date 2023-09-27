@@ -14,6 +14,7 @@
       cluster: patroni
       env: demo
     grafana_password: "grafana"
+    grafana_discord_url: "https://discord.com/api/webhooks/1156165261494329404/_uHM5BVinLYGUufeHqTSW-5TT-j_Id3yfotE_HB0ANySw7QcR5SMBVLVE6_r-xsR257A"
   tasks:
     - name: Prepare all folders needed
       ansible.builtin.file:
@@ -113,6 +114,17 @@
       delay: 5
       until: grafana_response.status == 200
       ignore_errors: yes
+
+    - name: Create Discord notification channel
+      community.grafana.grafana_notification_channel:
+        type: discord
+        uid: discord
+        name: Discord Notification Channel
+        discord_url: "{{ grafana_discord_url }}"
+        grafana_url: "http://{{ item }}:3000/"
+        grafana_user: "admin"
+        grafana_password: "{{ grafana_password}}"
+      with_items: "{{ monitoring_public_ip }}"
 
     - name: create prometheus datasource
       community.grafana.grafana_datasource:
