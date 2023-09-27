@@ -2,7 +2,7 @@
 
 ![coordinated-os-update](./coordinated-updates.jpg)
 
-Fedora CoreOS is a lightweight, container-focused operating system. It is designed to be updated automatically and frequently with atomic updates. This means that the entire operating system is updated as a whole, including the kernel. This is a great feature for keeping your system up to date and secure, but it can be a challenge to coordinate updates across multiple machines. There are some use cases where you want to coordinate when a system is updated. For example, if you have a 3 node database cluster, you would not want to update (which requires a reboot) all of the machines at the same time. This would cause downtime for your database. Instead, you would want to update one machine at a time, so that the database can fail over to another machine while the first machine is being updated. In this blog post, we will learn how to coordinate OS updates across multiple Fedora CoreOS machines with the help of etcd and Airlock.
+Fedora CoreOS is a lightweight, container-focused operating system. It is designed to be updated automatically and frequently with atomic updates. This means that the entire operating system is updated as a whole. This is a great feature for keeping your system up to date and secure, but it can be a challenge to coordinate updates across multiple machines. There are some use cases where you want to coordinate when a system is updated. For example, if you have a 3-node database cluster, you would not want to update (which requires a reboot) all of the machines at the same time. This would cause downtime for your database. Instead, you would want to update one machine at a time, so that the database can fail over to another machine while the first machine is being updated. In this blog post, we will learn how to coordinate OS updates across multiple Fedora CoreOS machines with the help of `etcd` and `Airlock`.
 
 # Prerequisites
 
@@ -91,7 +91,6 @@ Airlock and Zincati have been configured. Now we can run Airlock on our Fedora C
     LimitNOFILE=40000
 
     ExecStartPre=/usr/bin/loginctl enable-linger patroni-user
-    ExecStartPre=/usr/local/bin/prepare-airlock.sh
     ExecStartPre=/usr/bin/podman rm -f airlock-container
     ExecStart=/usr/bin/podman \
     run \
@@ -167,6 +166,8 @@ time="2023-09-26T15:03:16Z" level=error msg="failed to lock semaphore: all 1 sem
 ```
 
 Then the response is a `red-flag`, which means that the machine cannot be rebooted and the lock is currently being used by another machine. You can produce this response by changing the id of the machine in the `body.json` file and sending the request again.
+
+Keep ind mind that the FleetLock requests will be sent automatically by Zincati. Therefore, it is not necessary to send the requests manually. We just sent the request manually to test the Airlock service.
 
 ## Conclusion
 
