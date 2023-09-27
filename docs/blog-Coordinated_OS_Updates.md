@@ -31,7 +31,7 @@ tls = false
 
 # Etcd-v3 client configuration
 [etcd3]
-endpoints = [ "10.0.1.33:2379","10.0.1.34:2379" ] # Replace with your etcd endpoints
+endpoints = [ "http://10.0.1.33:2379","http://10.0.1.34:2379" ] # Replace with your etcd endpoints
 client_cert_pub_path = "/etc/ssl/self-certs/proventa-client-cert.pem"
 client_cert_key_path = "/etc/ssl/self-certs/proventa-client-cert-key.pem"
 
