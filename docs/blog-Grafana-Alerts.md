@@ -1,5 +1,7 @@
 # Get Notified: Setting Up Alerts in Grafana
 
+![Grafana Alerts](./grafana-alerts.jpg)
+
 If you are using Grafana to monitor your systems, you are already ahead of the game. But did you know that you can also use Grafana to set up alerts? This is a great way to get notified when something goes wrong with your systems. In this blog post, we will show you how to set up alerts in Grafana so that you can be notified when something does not align with the rules you have set up for your system.
 
 ## Prerequisites
