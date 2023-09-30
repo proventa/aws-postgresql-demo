@@ -2,16 +2,16 @@
 
 ![coordinated-os-update](./coordinated-updates.jpg)
 
-Fedora CoreOS is a lightweight, container-focused operating system. It is designed to be updated automatically and frequently with atomic updates. This means that the entire operating system is updated as a whole. This is a great feature for keeping your system up to date and secure, but it can be a challenge to coordinate updates across multiple machines. There are some use cases where you want to coordinate when a system is updated. For example, if you have a 3-node database cluster, you would not want to update (which requires a reboot) all of the machines at the same time. This would cause downtime for your database. Instead, you would want to update one machine at a time, so that the database can fail over to another machine while the first machine is being updated. In this blog post, we will learn how to coordinate OS updates across multiple Fedora CoreOS machines with the help of `etcd` and `Airlock`.
+Fedora CoreOS is a lightweight, container-focused operating system. It is designed to be updated automatically and frequently with atomic updates. This means that the entire operating system is updated as a whole. This is a great feature for keeping your system up to date and secure, but it can be a challenge to coordinate updates across multiple machines. There are some use cases where you want to coordinate when a system is updated. For example, if you have a 3-node database cluster, you would not want to update (which requires a reboot) all of the machines at the same time. This would cause downtime for your database. Instead, you would want to update one machine at a time, so that the database can fail over to another machine while the first machine is being updated. This is called a rolling update. In this blog post, we will learn how to coordinate OS updates across multiple Fedora CoreOS machines with the help of `etcd` and `Airlock`.
 
 # Prerequisites
 
 - An `etcd` cluster, which will be used by Airlock to coordinate the OS updates. We have a blog post about how to set up an etcd cluster [here](./blog-etcd_Cluster.md).
-- Two or more Fedora CoreOS machine that will be used to run Airlock. In this case we will use the machines running Spilo container image. The guide to set up Spilo on Fedora CoreOS can be found [here](./blog-Running_Spilo.md).
+- Two or more Fedora CoreOS machines that will be used to run Airlock. In this case we will use the machines running Spilo container image. The guide to set up Spilo on Fedora CoreOS can be found [here](./blog-Running_Spilo.md).
 
 # Airlock Configuration
 
-Airlock is a tool that can be used to coordinate OS updates across multiple Fedora CoreOS machines. It is a simple tool that uses etcd to coordinate the updates. It is available as a container image, so it can be run on any container runtime.
+[Airlock](https://github.com/coreos/airlock) is a tool that can be used to coordinate OS updates across multiple Fedora CoreOS machines. It is a simple tool that uses etcd to coordinate the updates. It is available as a container image, so it can be run on any container runtime.
 
 Airlock needs a .toml file for its configuration. We can use the following `config.toml` file for our setup:
 
@@ -46,7 +46,7 @@ name = "patroni"
 slots = 1
 ```
 
-The `status` section configures the status service, which is used to check the status of the machine. This endpoint will be useful for the monitoring the airlock status with the help of Prometheus and Grafana.
+The `status` section configures the status service, which is used to check the status of the machine. This endpoint will be useful for monitoring the airlock status with the help of Prometheus and Grafana.
 
 The `service` section configures the main service, which is used to coordinate the OS updates. In this endpoint `Zincati` will send a FleetLock request to check if the machine can be rebooted for an update. FleetLock protocol is a request-response protocol based on HTTP, with which Zincati can request a lock for rebooting the machine. The response will be either `OK` or `BUSY`. If the response is `OK`, then the machine can be rebooted. If the response is `BUSY`, then the machine cannot be rebooted.
 
@@ -108,7 +108,7 @@ Airlock and Zincati have been configured. Now we can run Airlock on our Fedora C
     WantedBy=multi-user.target
 ```
 
-There are no special configurations in this unit file. We are just mounting the `config.toml` file that we created earlier and running the Airlock container with the `airlock serve -vv` command.
+There are no special configurations in this unit file. We are just mounting the `config.toml` file that we created earlier and run the Airlock container with the `airlock serve -vv` command.
 
 After that, we can run the ansible-playbook from the previous blog post to provision the machines.
 
@@ -171,4 +171,4 @@ Keep ind mind that the FleetLock requests will be sent automatically by Zincati.
 
 ## Conclusion
 
-In this blog post, we learned how to coordinate OS updates across multiple Fedora CoreOS machines with the help of etcd and Airlock. We also learned how to configure Airlock and Zincati to use Airlock. Lastly, we learned how to test the Airlock service. At this point, you should be able to coordinate OS updates across multiple Fedora CoreOS machines with the help of Airlock, ensuring that only one machine is updated at a time. We hope that you found this blog post useful!
+In this blog post, we learned how to coordinate OS updates across multiple Fedora CoreOS machines with the help of etcd and Airlock. We also learned how to configure Airlock and Zincati to use Airlock. Lastly, we learned how to test the Airlock service. At this point, you should be able to coordinate OS updates across multiple Fedora CoreOS machines with the help of Airlock, ensuring that only one machine is updated at a time. We hope that you found this blog post useful! More is coming soon.
