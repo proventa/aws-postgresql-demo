@@ -10,7 +10,7 @@ A fully functioning PostgreSQL Cluster based on Patroni with backups. If you don
 
 ## Patroni Failover
 
-Patroni uses a distributed consensus algorithm, such as etcd, ZooKeeper, or Consul, to elect a leader node among the database cluster nodes. The leader node is responsible for handling write requests, while the standby nodes replicate data from the leader to ensure data redundancy. If the leader node fails, the standby nodes will elect a new leader and continue to serve write requests.
+Patroni uses a distributed consensus algorithm component, such as etcd, ZooKeeper, or Consul, to elect a leader node among the database cluster nodes. The leader node is responsible for handling write requests, while the standby nodes replicate data from the leader to ensure data redundancy. If the leader node fails, the standby nodes will elect a new leader and continue to serve write requests.
 
 ### Case 1: Leader Node Failure
 
@@ -34,7 +34,7 @@ The output should be similar to the following:
 
 If all nodes are on `running` state, then we can proceed to the next step.
 
-Now, we will simulate a leader node failure by stopping the PostgreSQL service on the leader node. We can just terminate the EC2 instance that is running the leader node. In the `member` column, we can see that the leader node is `ec2-id-1`. So, we will terminate the EC2 instance with ID `ec2-id-1`. 
+Now, we will simulate a leader node failure by stopping the PostgreSQL service on the leader node. We can just terminate the EC2 instance that is running the leader node. In the `member` column, we can see that the leader node is `ec2-id-1`. So, we will terminate the EC2 instance with ID `ec2-id-1`.
 
 If you want to check directly the status of the cluster, you would see that the cluster does not have a leader node anymore. This is because the leader is down and the standby nodes are still trying to elect a new leader. We can check the status of the cluster by running the following command:
 
@@ -70,7 +70,7 @@ In this section we will simulate a cluster failure and see how Patroni handles i
 
 Now, we will simulate a cluster failure by stopping all the PostgreSQL services. We can just terminate all the EC2 instances that are running the PostgreSQL service. In the `member` column, we can see that we have 2 members left, which are `ec2-id-2` and `ec2-id-3`. So, we will terminate the EC2 instances with ID `ec2-id-2` and `ec2-id-3`.
 
-At this point, you should only have the EC2 instances that is running etcd service.
+At this point, you should only have the EC2 instances that are running the etcd service.
 
 Now, we will provision 3 nodes with the same Patroni/Spilo configuration as before. We can do that by running the ansible playbook that we have used before. The command should be similar to the following:
 
