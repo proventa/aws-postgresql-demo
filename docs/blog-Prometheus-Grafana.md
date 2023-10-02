@@ -1,4 +1,4 @@
-# Monitoring Cluster with Prometheus and Grafana on EC2 Instances
+# Cluster Monitoring with Prometheus & Grafana on EC2 Instances
 
 ![grafana-prometheus](grafana-prometheus.jpg)
 
@@ -168,7 +168,7 @@ The task to import the data source is as follows:
     ds_url: http://localhost:9090
     is_default: true
     with_items: "{{ monitoring_public_ip }}"
-```	
+```
 
 The task to import the dashboards is as follows:
 
@@ -208,4 +208,4 @@ Here are some screenshots of the Grafana dashboard:
 
 ## Wrapping Up
 
-In this blog post, we have learned how to monitor the cluster with Prometheus and Grafana on EC2 instances. We have also learned how to import the data source and dashboard to Grafana with Ansible. As maybe you have noticed, it is not that hard to prepare a monitoring system for your PostgreSQL cluster. We hope this blog post can help you to prepare a monitoring system for your PostgreSQL cluster.
+In this blog post, we have learned how to setup monitoring for the cluster with Prometheus and Grafana on EC2 instances. We have also learned how to import the data source and dashboard to Grafana with Ansible. As maybe you have noticed, it is not that hard to prepare a monitoring system for your PostgreSQL cluster. We hope this blog post can help you to prepare a monitoring system for your PostgreSQL cluster. Stay tuned for more blog posts to extend our series.
