@@ -32,7 +32,7 @@
 
     - include_tasks: ../keys_and_certs-task.yml
 
-    - name: Get Private DNS of the patroni Cluster
+    - name: Get Private DNS of the etcd Cluster
       set_fact:
         private_ips: "{{ groups['tag_cluster_etcd'] }}"
 
