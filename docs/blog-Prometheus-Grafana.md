@@ -186,25 +186,27 @@ The task to import the dashboards is as follows:
     with_items: "{{ monitoring_public_ip }}"
 ```
 
-Make sure to replace `<cluster-name>` with the name of the Grafana dashboard JSON file. The JSON file for each dashboards can be downloaded from our GitHub repository [here](https://github.com/proventa/aws-postgresql-demo).
+Make sure to replace `<cluster-name>` with the name of the Grafana dashboard JSON file. The JSON file for each dashboards can be downloaded from our GitHub repository [here](https://github.com/proventa/aws-postgresql-demo/tree/main/grafana-dashboards).
 
 Here are some screenshots of the Grafana dashboard:
 
-- etcd dashboard
+- etcd dashboard - [Etcd by Prometheus](https://grafana.com/grafana/dashboards/3070-etcd/)
 
 ![etcd-dashboard](etcd-dashboard.png)
 
-- PostgreSQL dashboard
+- PostgreSQL dashboard - [PostgreSQL Database](https://grafana.com/grafana/dashboards/9628-postgresql-database/)
 
 ![postgres-dashboard](postgres-dashboard.png)
 
-- PgBouncer dashboard
+- PgBouncer dashboard - [PostgreSQL PGbouncer](https://grafana.com/grafana/dashboards/9760-postgresql-pgbouncer/)
 
 ![pgbouncer-dashboard](pgbouncer-dashboard.png)
 
-- Patroni dashboard
+- Patroni dashboard - [PostgreSQL Patroni](https://grafana.com/grafana/dashboards/18870-postgresql-patroni/)
 
 ![patroni-dashboard](patroni-dashboard.png)
+
+Keep in mind that the dashboards from the original source may not work out of the box, since we have a few modifications to the panels, variables and queries. You can check the JSON files for the dashboards in our GitHub repository [here](https://github.com/proventa/aws-postgresql-demo/tree/main/grafana-dashboards).
 
 ## Wrapping Up
 
