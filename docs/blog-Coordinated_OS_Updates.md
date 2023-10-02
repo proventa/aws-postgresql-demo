@@ -167,7 +167,7 @@ time="2023-09-26T15:03:16Z" level=error msg="failed to lock semaphore: all 1 sem
 
 Then the response is a `red-flag`, which means that the machine cannot be rebooted and the lock is currently being used by another machine. You can produce this response by changing the id of the machine in the `body.json` file and sending the request again.
 
-Keep ind mind that the FleetLock requests will be sent automatically by Zincati. Therefore, it is not necessary to send the requests manually. We just sent the request manually to test the Airlock service.
+Keep in mind that the FleetLock requests will be sent automatically by Zincati. Therefore, it is not necessary to send the requests manually. We just sent the request manually to test the Airlock service.
 
 ## Conclusion
 
