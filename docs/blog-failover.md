@@ -14,7 +14,7 @@ Patroni uses a distributed consensus algorithm, such as etcd, ZooKeeper, or Cons
 
 ### Case 1: Leader Node Failure
 
-In this section we will simulate a leader node failure and see how Patroni handles it. In one of the previous blog posts, we have deployed a 3-nodes PostgreSQL cluster on AWS EC2 instances. Now, we should check, whether all the nodes are currently running and healthy. We can do that by logging in to one of the node and then running the following command:
+In this section we will simulate a leader node failure and see how Patroni handles it. In one of the previous blog posts, we have deployed a 3-nodes PostgreSQL cluster on AWS EC2 instances. Now, we should check, whether all the nodes are currently running and healthy. We can do that by logging in to one of the nodes and then running the following command:
 
 ```bash
 podman exec -it patroni-container patronictl list
@@ -78,7 +78,7 @@ Now, we will provision 3 nodes with the same Patroni/Spilo configuration as befo
 ansible-playbook init-patroni-cluster.yml
 ```
 
-After the playbook has finished running, we can log in to one of the node and then check the status of the cluster by running the same command as before, which is:
+After the playbook has finished running, we can log in to one of the nodes and then check the status of the cluster by running the same command as before, which is:
 
 ```bash
 podman exec -it patroni-container patronictl list
@@ -91,8 +91,9 @@ However, if you are too fast, you would see that the cluster does not have a lea
 | Member    | Host        | Role    | State    | TL | Lag in MB |
 +-----------+-------------+---------+----------+----+-----------+
 | new-ec2-1 | 2.x.x.x     | Leader  | running  |  3 |           |
-| new-ec3-2 | 3.x.x.x     | Replica | running  |  3 |         0 |
-+-------3---+-------------+---------+----------+----+-----------+
+| new-ec2-2 | 3.x.x.x     | Replica | running  |  3 |         0 |
+| new-ec2-3 | 4.x.x.x     | Replica | running  |  3 |         0 |
++-----------+-------------+---------+----------+----+-----------+
 ```
 
 Notice that now the TL (Timeline) has increased from 2 to 3. This is because the cluster has been restored from the backup and a new leader node has been elected.
