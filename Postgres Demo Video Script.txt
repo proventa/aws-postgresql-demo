@@ -1,0 +1,121 @@
+-- Title --
+Hallo zusammen,
+Heute möchten wir euch zeigen, wie man ein hochverfügbares Postgres Cluster provisionieren kann
+
+-- Einleitung --
+Bevor wir anfangen, haben wir die Frage gestellt: warum wir das überhaupt entwicklen wollen?
+
+Es gibt doch Kubernetes. Warum nutzt man einfach nicht das?
+
+Ja, K8s ist aber komplizierter als gedacht. Man muss erstmal sicher stellen, dass es mindestens ein Team gibt, das sich mit K8s gut auskennt. Und wenn nicht, muss man viel Zeit investieren, weil die Lernkurve steil ist.
+
+Kubernetes fordert recht hohe Mindestanforderungen.
+
+Am Ende muss man sich überlegen, ob die Investition sich lohnt.
+
+Wenn es nicht der Fall ist, dann bauen wir unser eigenes Lightweight Postgres HA-Cluster, der auch ein Paar Features von K8s hat, wie:
+
+1. Rolling Updates
+2. Wenige Wartungsarm, weil alles automatisiert ist
+3. Und die Hochverfügbarkeit.
+
+-- High-Level Architecture --
+Jetzt steigen wir in die Architektur ein
+Wir brauchen 4 Komponenten, nämlich:
+1. Einen etcd-Cluster
+
+2. Der Postgres Cluster. Da werden wir das Silo Image nutzen.
+
+3. Dann haben wir ein S3 Bucket, wo die Backups der Datenbanken gespeichert werden.
+
+4. Und am Ende der Monitoring-Cluster.
+
+-- Ansible --
+Wir werden alle Ressourcen, die wir benötigen, über Ansible provisionieren. Wir verwenden die AWS EC2 Instanzen für die etcd, Postgres/Patroni sowie Grafana/Prometheus und ein S3 Bucket für die WAL-E/WAL-G Backups
+
+-- Fedora CoreOS --
+Bei jeden EC2 Instanzen wird Fedora CoreOS installiert. 
+
+Bei Fedora CoreOS gibt es die sogenannte Butane-Datei, die im YAML formatiert ist. Da kann man vieles konfigurieren, wie z.B. die Users, Dateien, oder Systemd  Unit Files.
+
+Danach wird die Butana-Datei in eine JSON formatierte Ignition-Datei konvertiert
+
+Am Ende kann die Ignition-Datei als UserData beim Provisionieren der EC2 Machine angehängt, sodass die Konfiguration beim BootUp wahrgenommen werden kann
+
+
+-- etcd Playbook --
+Hier haben wir ein Task zum Provisionieren einer EC2 Machine. Wie wir sehen können, gibt es viele Konfigurationen, wie die Anzahl der Maschinen, Tags, Region, etc. Was uns aber momentan interessiert ist der UserData, wo wir die Ignition-Datei anhängen. Also, lass uns die Butane-Datei anschauen!
+
+-- etcd Butane --
+Hier ist die Systemd Unit File zum etcd.
+
+Wir verwenden Podman und das etcd image.
+
+Dann geben wir hier die Konfiguration zu unserem etcd service, wie z.B. die TLS-Zertifikate, oder den DNS-Namen zum Discovery Service
+
+Das wäre es für den etcd Service. Jetzt schauen wir uns das Spilo Image an.
+
+-- Patroni Playbook --
+Außer die EC2 Maschine werden wir für den Postgres Cluster einen Load Balancer provisionieren.
+
+-- Patroni Butane --
+So, hier haben wir die Systemd Unit File zu dem Spilo Image.
+
+Und wie man sieht, gibt es viel, was man konfigurieren kann, wie z.B. die ETCD Hosts, REST API SSL, und ein S3 Bucket für das Backup.
+
+So können wir das Silo Image konfigurieren, jetzt schauen wir uns Grafana und Prometheus an!
+
+-- Monitoring Butane --
+
+Für Demo Zwecke haben wir für die Konfiguration vom Grafana und Prometheus auf die minimalste Version gehalten.
+
+Das heißt, für Prometheus haben wir einfach die Config-Datei gemapped und für Grafana nur das Admin Password übergeben.
+
+Und somit haben wir alle Konfigurationsdateien angeschaut und können die EC2 Instanzen provisionieren!
+
+
+-- After Provisioning -- 
+Nachdem wir alle Playbooks ausgeführt haben, können wir die EC2 Instanzen in der AWS Konsole anschauen.
+
+Hier haben wir insgesamt 7 Instanzen. 3 davon sind für den etcd Cluster, die andere 3 für Spilo bzw. Postgres Cluster, und die letze ist dann für den monitoring Cluster.
+
+Außerdem haben wir auch einen Load Balancer für den Postgres Cluster.
+
+-- Testing PG --
+
+Lass uns den DNS-Namen von dem Load Balancer kopieren und versuchen auf die Datenbank zu zugreifen.
+
+Wir können den PSQL Befehl verwenden.
+
+So, hier ist der Load Balancer DNS-Name, und dann in diesem Fall nutzen wir den Port 6432 und der User Postgres.
+
+Dann geben wir das Password ein, und dann sind wir mit der Datenbank verbunden. 
+
+-- Terminate Leader Node --
+Was wir jetzt als nächstes machen können, ist dass wir den Leader Node terminieren, und dann versuchen wieder mit der Datenbank zu verbinden.
+
+** Maschine Terminiert **
+
+Ok. der Leader ist terminiert, und jetzt können wir versuchen, wieder auf die Datenbank zu zugreifen.
+
+Also, hier nutzen denselben DNS-Namen, denselben Port und auch denselben User.
+
+Und jetzt sehen wir, dass die Datenbank ist noch verfügbar.
+
+Das hat funktioniert, weil Patroni erkennt, dass der Leader Node terminiert wurde, und somit ein neues Leader Node gewählt werden muss. Danach können Anfragen von dem neuen Primary Node verarbeitet werden.
+ 
+-- Dashboards --
+Was wir noch machen können, ist dass wir den Status von den Clusters auf Grafana anschauen. 
+
+Dann besuchen wir das Grafana UI mit der IP Adresse von der Monitoring Maschine.
+
+Hier haben wir verschiedene Dashboards wie das etcd Dashboard, PgBouncer Dashboard, Postgres Dashboard und der Patroni Dashboard.
+
+-- Closing --
+Okay, wir haben wir fast alle Themen behandelt. Jetzt stellt sich die Frage, wie Betriebssystem-Updates so verwaltet werden können, dass nicht alle Nodes gleichzeitig ein Update machen, was zu Downtime führen kann, sondern ein Node nach dem anderen.
+
+Da kommt Airlock ins Spiel. 
+
+Wollt ihr wissen, wie das funktioniert? Bleibt dran für unser nächstes Video!
+
+Vielen Dank für das Zuschauen! Und bis zum nächstes Mal!
