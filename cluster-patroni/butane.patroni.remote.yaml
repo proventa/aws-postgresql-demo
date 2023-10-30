@@ -73,9 +73,6 @@ systemd:
             --env ETCD3_CACERT="/etc/ssl/self-certs/proventa-root-ca.pem" \
             --env ETCD3_CERT="/etc/ssl/self-certs/proventa-client-cert.pem" \
             --env ETCD3_KEY="/etc/ssl/self-certs/proventa-client-cert-key.pem" \
-            --env SSL_RESTAPI_CA_FILE="/etc/ssl/self-certs/proventa-root-ca.pem" \
-            --env SSL_RESTAPI_CERTIFICATE_FILE="/etc/ssl/self-certs/proventa-client-cert.pem" \
-            --env SSL_RESTAPI_PRIVATE_KEY_FILE="/etc/ssl/self-certs/proventa-client-cert-key.pem" \
             --env AWS_REGION="eu-central-1" \
             --env WAL_S3_BUCKET="patroni-demo-bucket" \
             --env AWS_ROLE_ARN="${AWS_ROLE_ARN}" \

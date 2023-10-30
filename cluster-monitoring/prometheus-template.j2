@@ -16,6 +16,7 @@ scrape_configs:
     key_file: "/etc/ssl/self-certs/proventa-client-cert-key.pem"
     insecure_skip_verify: false
   scheme: https
+
 - job_name: 'pgbouncer-exporter'
   static_configs:
   - targets: [{% for ip in patroni_private_ips %}'{{ ip }}:9127'{% if not loop.last %},{% endif %}{% endfor %}]
@@ -27,6 +28,7 @@ scrape_configs:
     key_file: "/etc/ssl/self-certs/proventa-client-cert-key.pem"
     insecure_skip_verify: false
   scheme: https
+
 - job_name: 'patroni'
   static_configs:
   - targets: [{% for ip in patroni_private_ips %}'{{ ip }}:8008'{% if not loop.last %},{% endif %}{% endfor %}]
@@ -37,7 +39,8 @@ scrape_configs:
     cert_file: "/etc/ssl/self-certs/proventa-client-cert.pem"
     key_file: "/etc/ssl/self-certs/proventa-client-cert-key.pem"
     insecure_skip_verify: false
-  scheme: https
+  scheme: http
+
 - job_name: 'etcd'
   static_configs:
   - targets: [{% for ip in etcd_private_ips %}'{{ ip }}:2379'{% if not loop.last %},{% endif %}{% endfor %}]
@@ -49,11 +52,13 @@ scrape_configs:
     key_file: "/etc/ssl/self-certs/proventa-client-cert-key.pem"
     insecure_skip_verify: false
   scheme: https
+
 - job_name: 'patroni-airlock'
   static_configs:
   - targets: [{% for ip in patroni_private_ips %}'{{ ip }}:2222'{% if not loop.last %},{% endif %}{% endfor %}]
     labels:
       group: 'patroni-airlock'
+
 - job_name: 'etcd-airlock'
   static_configs:
   - targets: [{% for ip in etcd_private_ips %}'{{ ip }}:2222'{% if not loop.last %},{% endif %}{% endfor %}]
