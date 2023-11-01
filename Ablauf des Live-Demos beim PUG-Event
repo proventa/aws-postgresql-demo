@@ -1,0 +1,48 @@
+# Ablauf des Live-Demos:
+
+* Ansible Playbook für etcd Cluster zeigen
+   * Erwähne, dass wir das amazon.aws Modul verwenden, um die verschiedene AWS Ressourcen zu provisionieren
+   * Erwähne, dass die Ignition-Datei im Parameter user_data eingegeben wird
+
+* Butane-File für etcd zeigen
+   * Verschiedene User mit deren Passwort können erstellt werden
+   * Systemd Unit Files können eben erstellt werden
+        * Systemd Unit File zu etcd.service zeigen
+        * Erwähne, dass die Kommunikation zwischen den etcd Peers und Clients mit TLS geschutzt wird
+	* Erwähne auch, dass wir den Public Discovery Service verwenden, sodass wir die IP-Addresse der anderen etcd-Hosts nicht im Voraus kennen müssen
+   * Zeige, dass in einer Butane-Datei File-Systeme gemapped werden können.
+
+* Ignition-File kurz zeigen, sodass man sieht, warum man lieber mit Butane-File arbeitet statt direkt mit JSON formatierter Ignition-Files
+
+* Das Playbook für etcd ausführen
+
+* Butane-File für Spilo zeigen
+   * SCOPE und PGVERSION env
+   * ETCD env
+   * WAL-G Backups env
+
+* Das Playbook für Spilo ausführen
+
+* Butane-File für Prometheus und Grafana zeigen
+   * Das Mappen der Prometheus-Konfigurationsdatei zeigen
+	* Die Prometheus-Konfigurationsdatei zeigen
+   * Die GF_SECURITY_ADMIN_PASSWORD Umgebungsvariable zeigen
+
+* Das Playbook für den Monitoring-Cluster ausführen
+
+* Die provisionierte EC2-Instanzen zeigen. (Eventuell noch 6, weil die Monitoring-Maschine noch nicht bereit ist)
+
+* Zeige den Load Balancer
+
+* Versuche, auf die Datenbank mit dem DNS-Namen des Load Balancer zuzugreifen
+
+* Einen Failover simulieren
+    * Den Leader-Node terminieren
+    * Warte, bis eines der Node im Target Group healthy ist (D.h. der neue Leader-Node wurde ausgewählt)
+    * Versuche wider, auf die Datenbank mit dem DNS-Namen des Load Balancer zuzugreifen
+
+* Überprüfe, dass das Grafana UI bereit ist.
+
+* Wenn ja, dann das Playbook post-deployment.yml ausführen, um die Dashboards zu importieren
+
+* Die verschiedene Dashboards zeigen.
